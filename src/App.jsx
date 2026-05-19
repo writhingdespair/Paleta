@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Calendar,
   Clock,
+  CreditCard,
   Instagram,
   MapPin,
   Menu as MenuIcon,
@@ -11,7 +12,7 @@ import {
   Navigation,
   ShieldCheck,
   Sparkles,
-  Truck,
+  Wallet,
   X,
 } from 'lucide-react'
 
@@ -20,17 +21,17 @@ const flavors = [
     id: 'fresas',
     name: 'Fresas con Crema',
     english: 'Strawberry Cream',
-    tagline: 'Voluptuous frozen strawberries, swirled in real cream.',
+    tagline: 'Strawberries and cream. Real ones.',
     description:
-      'Voluptuous real frozen strawberries pureed into a rich cream base, layered with hand-cut fresh strawberry pieces.',
+      'Real strawberries, sweet cream, a little condensed milk. We hand-cut the strawberries so you actually bite into them.',
     calories: 200,
     ingredients: [
-      'Real Strawberries',
+      'Strawberries',
       'Sweetened Condensed Milk',
-      'Heavy Whipping Cream',
-      'Authentic Mexican Crema',
+      'Heavy Cream',
+      'Mexican Crema',
       'Whole Milk',
-      'Vanilla Extract',
+      'Vanilla',
     ],
     accent: 'text-rose-300',
     chip: 'bg-rose-500/15 text-rose-200 border border-rose-400/20',
@@ -43,14 +44,14 @@ const flavors = [
     id: 'mango',
     name: 'Mango con Crema',
     english: 'Mango Cream',
-    tagline: 'Sun-ripened Alphonso mango, folded into sweet cream.',
+    tagline: "Mango and cream. That's it.",
     description:
-      'Velvety, sun-ripened mango chunks blended into our signature sweet cream base for a smooth tropical finish.',
+      'Ripe mango blended into sweet cream. Smooth, bright, cold.',
     calories: 190,
     ingredients: [
-      'Alphonso Mango Puree',
+      'Mango',
       'Sweetened Condensed Milk',
-      'Heavy Whipping Cream',
+      'Heavy Cream',
       'Mexican Crema',
       'Whole Milk',
     ],
@@ -65,15 +66,15 @@ const flavors = [
     id: 'coco',
     name: 'Coco Loco',
     english: 'Coconut Cream',
-    tagline: 'Fudge-dense coconut, weighted with toasted shred.',
+    tagline: 'Coconut cream, loaded with toasted coconut.',
     description:
-      'An ultra-dense, fudge-like coconut milk cream loaded with premium toasted shredded coconut for texture.',
+      'Thick coconut cream loaded with toasted shredded coconut. Heavy bar, lots of texture.',
     calories: 240,
     ingredients: [
-      'Premium Coconut Milk',
+      'Coconut Milk',
       'Sweetened Condensed Milk',
       'Heavy Cream',
-      'Organic Toasted Shredded Coconut',
+      'Toasted Shredded Coconut',
     ],
     accent: 'text-stone-200',
     chip: 'bg-stone-400/15 text-stone-200 border border-stone-300/20',
@@ -86,16 +87,16 @@ const flavors = [
     id: 'horchata',
     name: 'Horchata Classic',
     english: 'Cinnamon & Rice Milk',
-    tagline: 'House-brewed rice milk, real Ceylon cinnamon.',
+    tagline: 'Rice milk, cinnamon. The way it should be.',
     description:
-      'A traditional Mexican classic frozen into a rich bar, infused with real cinnamon and sweet condensed milk.',
+      'Rice milk, cinnamon, condensed milk — the classic, frozen into a thick bar.',
     calories: 180,
     ingredients: [
-      'House-Brewed Rice Milk',
+      'Rice Milk',
       'Whole Milk',
       'Sweetened Condensed Milk',
-      'Pure Vanilla Extract',
-      'Ground Ceylon Cinnamon',
+      'Vanilla',
+      'Ceylon Cinnamon',
     ],
     accent: 'text-orange-300',
     chip: 'bg-orange-500/15 text-orange-200 border border-orange-400/20',
@@ -109,26 +110,26 @@ const flavors = [
 const pillars = [
   {
     icon: Sparkles,
-    title: 'The Right Density',
-    body: 'Heavy fat creams and sweet condensed milk create a rich, dense, fudge-like bite.',
+    title: 'Thick, Not Watery',
+    body: "Heavy cream and condensed milk. That's why our bars bite like fudge, not like ice.",
   },
   {
     icon: ShieldCheck,
-    title: 'Real Fruit First',
-    body: 'Hand-chopped fresh pieces distributed directly into the mold grids.',
+    title: 'Real Fruit, Not Syrup',
+    body: "We cut the fruit by hand and drop it straight into the molds. You'll find pieces.",
   },
   {
-    icon: Truck,
-    title: 'Zero Waste Distribution',
-    body: 'Prepped in a licensed local commissary, frozen in industrial steel, and served raw curbside.',
+    icon: Sparkles,
+    title: 'Like Abuelita Made It',
+    body: "Old recipes, made by hand. No shortcuts, no fillers — the way it's done at home.",
   },
 ]
 
 const LOCATION = {
   street: '3448 US-9W',
   city: 'Highland, NY 12528',
-  hoursShort: '11:00 AM – 7:00 PM',
-  hoursLong: 'Open every day · 11:00 AM – 7:00 PM',
+  hoursShort: '11 AM – 7 PM',
+  hoursLong: 'Open every day · 11 AM – 7 PM',
   mapsUrl:
     'https://www.google.com/maps/search/?api=1&query=3448+US-9W+Highland+NY+12528',
 }
@@ -268,7 +269,7 @@ function Hero({ onExploreMenu, onFindUs }) {
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-pulse-dot" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
             </span>
-            Highland, NY · Spun daily · Open 11–7
+            Highland, NY · Open every day · 11–7
           </span>
 
           <h1
@@ -284,7 +285,7 @@ function Hero({ onExploreMenu, onFindUs }) {
             className="max-w-2xl text-lg sm:text-xl leading-relaxed text-slate-400 text-pretty animate-subtle-rise"
             style={{ animationDelay: '120ms' }}
           >
-            Small-batch, premium dairy bases spun daily with real fruit. No artificial stabilizers.
+            Real fruit. Real cream. No stabilizers, no shortcuts.
           </p>
 
           <div
@@ -294,7 +295,7 @@ function Hero({ onExploreMenu, onFindUs }) {
             <span className="inline-flex items-center gap-3 rounded-full bg-white text-ink pl-5 pr-2 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_60px_-30px_rgba(255,255,255,0.25)]">
               <span className="text-sm font-semibold tracking-wide">$4 Single</span>
               <span className="h-5 w-px bg-ink/15" />
-              <span className="text-sm font-semibold tracking-wide">2 for $6 Deal</span>
+              <span className="text-sm font-semibold tracking-wide">2 for $6</span>
               <span className="ml-1 inline-flex items-center justify-center rounded-full bg-ink/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-ink/70">
                 Today
               </span>
@@ -309,7 +310,7 @@ function Hero({ onExploreMenu, onFindUs }) {
               onClick={onExploreMenu}
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-ink shadow-sm hover:shadow-[0_0_0_4px_rgba(255,255,255,0.08)] hover:bg-slate-100 transition-all duration-300"
             >
-              Explore Menu
+              See the Menu
               <ArrowRight className="h-4 w-4 transition-all duration-300 group-hover:translate-x-0.5" />
             </button>
             <button
@@ -330,7 +331,7 @@ function FlavorCard({ flavor, onOpen }) {
   return (
     <button
       onClick={() => onOpen(flavor)}
-      className={`group relative flex flex-col text-left rounded-3xl border border-white/[0.06] bg-white/[0.02] p-7 sm:p-8 backdrop-blur-sm shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] hover:-translate-y-1 hover:shadow-xl hover:bg-white/[0.04] ${flavor.cardHover} transition-all duration-300 overflow-hidden`}
+      className={`group relative flex flex-col text-left rounded-3xl border border-white/[0.06] bg-white/[0.02] p-7 sm:p-8 backdrop-blur-sm shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] hover:-translate-y-1 hover:shadow-xl hover:bg-white/[0.04] ${flavor.cardHover} transition-all duration-300 overflow-hidden h-full`}
     >
       <div
         className={`pointer-events-none absolute inset-x-0 -top-10 h-48 bg-gradient-to-b ${flavor.cardGlow} opacity-90`}
@@ -342,7 +343,7 @@ function FlavorCard({ flavor, onOpen }) {
           className={`inline-flex items-center gap-1.5 rounded-full ${flavor.chip} px-3 py-1 text-[11px] font-medium tracking-wide uppercase backdrop-blur`}
         >
           <Sparkles className="h-3 w-3" strokeWidth={2} />
-          Premium Dairy Base
+          Cream Base
         </span>
         <span
           className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] border border-white/10 text-slate-300 group-hover:bg-white group-hover:text-ink group-hover:border-white transition-all duration-300"
@@ -360,7 +361,7 @@ function FlavorCard({ flavor, onOpen }) {
         <p className="mt-4 text-sm leading-relaxed text-slate-400">{flavor.tagline}</p>
       </div>
 
-      <div className="relative mt-8 flex items-center justify-between text-xs text-slate-500">
+      <div className="relative mt-auto pt-8 flex items-center justify-between text-xs text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <span className={`h-1 w-1 rounded-full ${flavor.dot}`} />
           {flavor.calories} kcal · per bar
@@ -382,17 +383,16 @@ function MenuSection({ onOpenFlavor }) {
               The Menu
             </span>
             <h2 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.03] tracking-tightest text-white text-balance">
-              Four signatures.
-              <br className="hidden sm:block" /> <span className="text-slate-500">All spun this morning.</span>
+              Four flavors.
+              <br className="hidden sm:block" /> <span className="text-slate-500">Made this morning.</span>
             </h2>
           </div>
           <p className="max-w-md text-slate-400 leading-relaxed">
-            Tap any flavor for full ingredient transparency and calibrated calorie profiles. Every
-            bar is portioned, frozen, and served the same day.
+            Tap a flavor for the full ingredient list. Every bar is made and frozen the day we sell it.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 items-stretch">
           {flavors.map((flavor) => (
             <FlavorCard key={flavor.id} flavor={flavor} onOpen={onOpenFlavor} />
           ))}
@@ -438,7 +438,7 @@ function FlavorModal({ flavor, onClose }) {
               className={`inline-flex items-center gap-1.5 rounded-full ${flavor.chip} px-3 py-1 text-[11px] font-medium tracking-wide uppercase backdrop-blur`}
             >
               <Sparkles className="h-3 w-3" strokeWidth={2} />
-              Premium Dairy Base
+              Cream Base
             </span>
           </div>
         </div>
@@ -486,8 +486,7 @@ function FlavorModal({ flavor, onClose }) {
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 flex items-center gap-4">
             <ShieldCheck className="h-5 w-5 text-slate-400 shrink-0" strokeWidth={1.6} />
             <p className="text-xs text-slate-400 leading-relaxed">
-              No artificial stabilizers, emulsifiers, or colors. Allergens may include dairy and
-              tree nuts depending on the daily prep.
+              No artificial stabilizers, emulsifiers, or colors. Contains dairy. May contain tree nuts.
             </p>
           </div>
         </div>
@@ -511,13 +510,12 @@ function LocationSection() {
               Find Us
             </span>
             <h2 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.03] tracking-tightest text-white text-balance">
-              One stand.
+              On 9W.
               <span className="text-slate-500"> Every day.</span>
             </h2>
           </div>
           <p className="max-w-md text-slate-400 leading-relaxed">
-            We're posted up in Highland, NY all summer long. Pull off Route 9W, grab a bar, keep
-            moving — or stay for a minute.
+            Same spot all summer in Highland, NY. Pull over, grab a bar, keep going.
           </p>
         </div>
 
@@ -526,7 +524,7 @@ function LocationSection() {
             <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-500/15 blur-3xl" />
             <div className="relative flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Our Location
+                The Stand
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-300 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide border border-emerald-400/20">
                 <span className="relative flex h-2 w-2">
@@ -539,7 +537,7 @@ function LocationSection() {
 
             <div className="relative mt-8">
               <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
-                Stationary Stand · Summer 2026
+                Open for the Summer
               </div>
               <div className="mt-3 flex items-start gap-4">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.04] border border-white/10 text-white shrink-0">
@@ -562,7 +560,7 @@ function LocationSection() {
                 className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-ink hover:bg-slate-100 hover:shadow-[0_0_0_4px_rgba(255,255,255,0.08)] transition-all duration-300"
               >
                 <Navigation className="h-4 w-4" strokeWidth={1.8} />
-                Open Directions
+                Open in Maps
                 <ArrowUpRight className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300" />
               </a>
               <a
@@ -589,7 +587,7 @@ function LocationSection() {
               </span>
               <div>
                 <p className="font-display text-3xl sm:text-[2rem] leading-tight tracking-tight text-white">
-                  11:00 AM – 7:00 PM
+                  11 AM – 7 PM
                 </p>
                 <p className="mt-1 text-slate-400 inline-flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-slate-500" strokeWidth={1.8} />
@@ -600,16 +598,18 @@ function LocationSection() {
 
             <div className="mt-auto pt-8 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  Season
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 inline-flex items-center gap-1.5">
+                  <CreditCard className="h-3 w-3" strokeWidth={1.8} />
+                  Card
                 </div>
-                <div className="mt-1.5 font-medium text-white">Summer</div>
+                <div className="mt-1.5 font-medium text-white">Tap & Apple Pay</div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  Days
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 inline-flex items-center gap-1.5">
+                  <Wallet className="h-3 w-3" strokeWidth={1.8} />
+                  Cash
                 </div>
-                <div className="mt-1.5 font-medium text-white">All seven</div>
+                <div className="mt-1.5 font-medium text-white">Always welcome</div>
               </div>
             </div>
           </div>
@@ -629,29 +629,24 @@ function PhilosophySection() {
             Our Philosophy
           </span>
           <h2 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.03] tracking-tightest text-white text-balance">
-            Three pillars.
-            <span className="text-slate-500"> Zero compromises.</span>
+            How we make them.
           </h2>
           <p className="mt-6 text-slate-400 leading-relaxed max-w-2xl">
-            Every choice — from cream sourcing to freezing protocol — is engineered around density,
-            integrity, and freshness. This is the discipline behind a bar that won't melt on you.
+            From the cream we buy to the way we freeze the bars, we keep it simple. Real fruit. Real cream. Made by hand. Sold the same day.
           </p>
         </div>
 
-        <div className="mt-14 lg:mt-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-14 lg:mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {pillars.map(({ icon: Icon, title, body }) => (
             <div
               key={title}
-              className="group flex flex-col rounded-3xl border border-white/10 bg-surface p-8 hover:-translate-y-1 hover:shadow-xl hover:border-white/20 transition-all duration-300"
+              className="group flex flex-col rounded-3xl border border-white/10 bg-surface p-8 hover:-translate-y-1 hover:shadow-xl hover:border-white/20 transition-all duration-300 h-full"
             >
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.04] text-white border border-white/10 group-hover:bg-white group-hover:text-ink group-hover:border-white transition-all duration-300">
                 <Icon className="h-5 w-5" strokeWidth={1.5} />
               </span>
               <h3 className="mt-7 font-display text-2xl tracking-tight text-white">{title}</h3>
               <p className="mt-3 text-slate-400 leading-relaxed">{body}</p>
-              <div className="mt-7 pt-5 border-t border-white/10 text-xs uppercase tracking-[0.22em] text-slate-500">
-                Standard
-              </div>
             </div>
           ))}
         </div>
@@ -667,7 +662,7 @@ function Footer() {
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
           <div>
             <div className="font-display text-4xl sm:text-5xl tracking-tightest">Elyra</div>
-            <p className="mt-3 text-white/60 text-sm tracking-wide">Catch us curbside.</p>
+            <p className="mt-3 text-white/60 text-sm tracking-wide">Cold bars on 9W.</p>
             <p className="mt-1 text-white/40 text-sm">
               {LOCATION.street}, {LOCATION.city} · {LOCATION.hoursShort}
             </p>
