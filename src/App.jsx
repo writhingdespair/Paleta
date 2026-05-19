@@ -1,21 +1,29 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
   Calendar,
   Check,
+  CheckCircle2,
   Clock,
   CreditCard,
   Instagram,
+  Loader2,
   MapPin,
   Menu as MenuIcon,
+  Minus,
   Music2,
   Navigation,
+  Plus,
+  ShoppingBag,
+  Trash2,
   Wallet,
   X,
 } from 'lucide-react'
 
 const STORAGE_KEY = 'elyra-lang'
+const SINGLE_PRICE = 4
+const PAIR_PRICE = 6
 
 const COPY = {
   en: {
@@ -51,6 +59,9 @@ const COPY = {
       allergenNote:
         'Contains dairy. May contain tree nuts. No artificial stabilizers, emulsifiers, or colors.',
       close: 'Close details',
+      quantity: 'Quantity',
+      add: 'Add to Cart',
+      added: 'Added',
     },
     note: null,
     location: {
@@ -89,7 +100,45 @@ const COPY = {
       enHi: 'Hello.',
       es: 'Español',
       esHi: 'Hola.',
-      remember: 'Remember my choice · Recordar mi elección',
+      remember: 'Remember · Recordar',
+    },
+    cart: {
+      title: 'Your Cart',
+      empty: 'Your cart is empty.',
+      emptyHint: 'Pick a flavor from the menu to get started.',
+      itemSingular: 'bar',
+      itemPlural: 'bars',
+      subtotal: 'Subtotal',
+      deal: '2-for-$6 Deal',
+      total: 'Total',
+      checkout: 'Checkout',
+      seeMenu: 'See the Menu',
+      open: 'Open cart',
+      close: 'Close cart',
+      remove: 'Remove',
+      pickupNote: 'Pickup at 3448 US-9W, Highland, NY · Ready in 5 min.',
+    },
+    checkout: {
+      title: 'Checkout',
+      back: 'Back to cart',
+      demoLabel: 'Demo Mode',
+      demoNote:
+        "No real charge will be made. We'll switch this to Stripe before launch.",
+      summary: 'Order Summary',
+      payment: 'Payment',
+      cardName: 'Name on card',
+      cardNamePlaceholder: 'Maria Reyes',
+      cardNumber: 'Card number',
+      cardExpiry: 'Expiry',
+      cardCvc: 'CVC',
+      useDemoCard: 'Fill demo card',
+      pay: 'Pay',
+      processing: 'Processing…',
+      successTitle: 'Order Confirmed.',
+      successNote:
+        "We'll have your bars ready when you pull up at the stand.",
+      orderNumberLabel: 'Order',
+      done: 'Done',
     },
   },
   es: {
@@ -103,7 +152,8 @@ const COPY = {
     hero: {
       pill: 'Highland, NY · Abierto todos los días · 11–7',
       title: ['Paletas Mexicanas.', 'Este Verano.'],
-      subtitle: 'Fruta natural. Crema de la buena. Sin estabilizadores. Sin atajos.',
+      subtitle:
+        'Fruta natural. Crema de la buena. Sin estabilizadores. Sin atajos.',
       single: '$4 c/u',
       deal: '2 x $6',
       seeMenu: 'Ver el Menú',
@@ -125,11 +175,14 @@ const COPY = {
       allergenNote:
         'Contiene lácteos. Puede contener nueces. Sin estabilizadores, emulsificantes ni colorantes artificiales.',
       close: 'Cerrar detalles',
+      quantity: 'Cantidad',
+      add: 'Agregar al Carrito',
+      added: 'Agregada',
     },
     note: {
       eyebrow: 'Una nota',
-      title: 'Como las de la plaza.',
-      body: 'Crecimos comiendo paletas en el calor del verano — esas de crema espesa, con fresa de verdad, que vendían en carritos por las plazas. Cuando llegamos al valle del Hudson, no las encontramos por ningún lado. Así que decidimos hacerlas nosotros mismos: mismas recetas, mismo cariño, mismo sabor de infancia. Ahora, aquí en la 9W.',
+      title: 'Como las de Guerrero.',
+      body: 'Crecimos comiendo paletas en Guerrero — esas de crema espesa, con fresa de verdad, que vendían en carritos por las plazas en el calor del verano. Cuando llegamos al valle del Hudson, no las encontramos por ningún lado. Así que decidimos hacerlas nosotros mismos: mismas recetas, mismo cariño, mismo sabor de infancia. Ahora, aquí en la 9W.',
       sign: '— La familia Elyra',
     },
     location: {
@@ -168,7 +221,46 @@ const COPY = {
       enHi: 'Hello.',
       es: 'Español',
       esHi: 'Hola.',
-      remember: 'Remember my choice · Recordar mi elección',
+      remember: 'Remember · Recordar',
+    },
+    cart: {
+      title: 'Tu Carrito',
+      empty: 'Tu carrito está vacío.',
+      emptyHint: 'Escoge un sabor del menú para empezar.',
+      itemSingular: 'paleta',
+      itemPlural: 'paletas',
+      subtotal: 'Subtotal',
+      deal: 'Promo 2 x $6',
+      total: 'Total',
+      checkout: 'Pagar',
+      seeMenu: 'Ver el Menú',
+      open: 'Abrir carrito',
+      close: 'Cerrar carrito',
+      remove: 'Quitar',
+      pickupNote:
+        'Recoge en 3448 US-9W, Highland, NY · Listo en 5 minutos.',
+    },
+    checkout: {
+      title: 'Pago',
+      back: 'Volver al carrito',
+      demoLabel: 'Modo Demo',
+      demoNote:
+        'No es un cobro real. Pronto lo conectamos a Stripe.',
+      summary: 'Resumen del Pedido',
+      payment: 'Pago',
+      cardName: 'Nombre en la tarjeta',
+      cardNamePlaceholder: 'María Reyes',
+      cardNumber: 'Número de tarjeta',
+      cardExpiry: 'Vencimiento',
+      cardCvc: 'CVC',
+      useDemoCard: 'Llenar tarjeta demo',
+      pay: 'Pagar',
+      processing: 'Procesando…',
+      successTitle: 'Pedido confirmado.',
+      successNote:
+        'Tendremos tus paletas listas cuando llegues al puesto.',
+      orderNumberLabel: 'Pedido',
+      done: 'Listo',
     },
   },
 }
@@ -184,6 +276,7 @@ const FLAVORS = [
     cardBg: 'bg-[#FBEEEA]',
     cardHover: 'hover:border-rose-300/80',
     modalWash: 'from-rose-300/70 via-rose-200/30 to-transparent',
+    swatch: 'bg-rose-300',
     copy: {
       en: {
         english: 'Strawberry Cream',
@@ -200,7 +293,7 @@ const FLAVORS = [
         ],
       },
       es: {
-        english: 'Estilo Michoacán',
+        english: 'Estilo Guerrero',
         tagline: 'Fresas y crema. De las buenas.',
         description:
           'Fresas de verdad, crema dulce y un toque de leche condensada. Cortamos las fresas a mano para que las sientas en cada mordida — como las paletas de la plaza, pero con fresa fresca del valle del Hudson.',
@@ -225,6 +318,7 @@ const FLAVORS = [
     cardBg: 'bg-[#FBF1DC]',
     cardHover: 'hover:border-amber-300/80',
     modalWash: 'from-amber-300/70 via-amber-200/30 to-transparent',
+    swatch: 'bg-amber-300',
     copy: {
       en: {
         english: 'Mango Cream',
@@ -263,6 +357,7 @@ const FLAVORS = [
     cardBg: 'bg-[#F5EFE2]',
     cardHover: 'hover:border-stone-300/80',
     modalWash: 'from-stone-300/70 via-stone-200/30 to-transparent',
+    swatch: 'bg-stone-300',
     copy: {
       en: {
         english: 'Coconut Cream',
@@ -300,6 +395,7 @@ const FLAVORS = [
     cardBg: 'bg-[#FBEEDC]',
     cardHover: 'hover:border-orange-300/80',
     modalWash: 'from-orange-300/70 via-orange-200/30 to-transparent',
+    swatch: 'bg-orange-300',
     copy: {
       en: {
         english: 'Cinnamon & Rice Milk',
@@ -374,6 +470,36 @@ const LOCATION = {
   hoursShort: '11 AM – 7 PM',
   mapsUrl:
     'https://www.google.com/maps/search/?api=1&query=3448+US-9W+Highland+NY+12528',
+}
+
+// ---- Helpers ----
+
+function priceCart(cart) {
+  const count = cart.reduce((sum, item) => sum + item.qty, 0)
+  const pairs = Math.floor(count / 2)
+  const singles = count % 2
+  const subtotal = count * SINGLE_PRICE
+  const total = pairs * PAIR_PRICE + singles * SINGLE_PRICE
+  const savings = subtotal - total
+  return { count, subtotal, total, savings, pairs, singles }
+}
+
+const fmt = (n) => `$${n.toFixed(2)}`
+
+function formatCardNumber(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 16)
+  return digits.replace(/(.{4})/g, '$1 ').trim()
+}
+
+function formatExpiry(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 4)
+  if (digits.length < 3) return digits
+  return `${digits.slice(0, 2)} / ${digits.slice(2)}`
+}
+
+function generateOrderNumber() {
+  const id = Math.random().toString(36).slice(2, 7).toUpperCase()
+  return `ELY-${id}`
 }
 
 // ---- Hooks ----
@@ -475,57 +601,52 @@ function LanguagePicker({ onChoose }) {
   const [remember, setRemember] = useState(true)
   const [hovered, setHovered] = useState(null)
 
+  useLockBodyScroll(true)
+
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-6 animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="lang-picker-title"
     >
-      <div className="absolute inset-0 bg-paper" />
-      <div className="absolute inset-0 -z-0 pointer-events-none">
-        <div className="absolute -top-40 right-[-12%] h-[34rem] w-[34rem] rounded-full bg-orange-300/45 blur-[110px]" />
-        <div className="absolute top-40 left-[-12%] h-[26rem] w-[26rem] rounded-full bg-rose-300/40 blur-[110px]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[22rem] w-[58rem] rounded-full bg-amber-200/40 blur-[120px]" />
-        <div className="absolute inset-0 paper-grain opacity-60" />
-      </div>
+      <div className="absolute inset-0 bg-ink/30 backdrop-blur-[3px] animate-fade-in" />
 
-      <div className="relative w-full max-w-md rounded-3xl border border-ink/[0.08] bg-cream p-8 sm:p-10 shadow-[0_40px_80px_-20px_rgba(26,22,16,0.18)] animate-scale-in">
+      <div className="relative w-full max-w-[22rem] rounded-2xl border border-ink/[0.08] bg-cream p-6 sm:p-7 shadow-[0_30px_70px_-20px_rgba(26,22,16,0.45)] animate-scale-in">
         <div className="text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-taupe">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-taupe">
             Welcome · Bienvenido
           </div>
-          <div className="mt-4 font-display text-5xl tracking-tightest text-ink">
+          <div className="mt-2.5 font-display text-4xl tracking-tightest text-ink leading-none">
             Elyra
           </div>
-          <div className="mt-3 h-[2px] w-10 mx-auto rounded-full bg-rose-400" />
+          <div className="mt-2.5 h-[2px] w-8 mx-auto rounded-full bg-rose-400" />
         </div>
 
-        <div className="mt-8 text-center">
-          <div
-            id="lang-picker-title"
-            className="font-display text-lg text-ink"
-          >
+        <div className="mt-5 text-center">
+          <div id="lang-picker-title" className="font-display text-base text-ink">
             Choose your language
           </div>
-          <div className="mt-0.5 text-sm text-taupe">Elige tu idioma</div>
+          <div className="mt-0.5 text-xs text-taupe">Elige tu idioma</div>
         </div>
 
-        <div className="mt-7 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-2.5">
           <button
             onClick={() => onChoose('en', remember)}
             onMouseEnter={() => setHovered('en')}
             onMouseLeave={() => setHovered(null)}
-            className="group rounded-2xl border border-ink/15 bg-paper px-5 py-5 text-left transition-[transform,border-color,box-shadow] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/40 hover:shadow-[0_18px_40px_-20px_rgba(26,22,16,0.2)]"
+            className="group rounded-xl border border-ink/15 bg-paper px-4 py-4 text-left transition-[transform,border-color,box-shadow] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/40 hover:shadow-[0_14px_30px_-16px_rgba(26,22,16,0.25)]"
           >
-            <div className="font-display text-xl tracking-tight text-ink">
+            <div className="font-display text-lg tracking-tight text-ink">
               English
             </div>
-            <div className="mt-1 text-xs text-taupe inline-flex items-center gap-1.5">
+            <div className="mt-0.5 text-[11px] text-taupe inline-flex items-center gap-1">
               Hello.
               <ArrowRight
-                className={`h-3 w-3 transition-transform duration-500 ease-fluid ${
-                  hovered === 'en' ? 'translate-x-0.5' : '-translate-x-1 opacity-0'
+                className={`h-3 w-3 transition-[transform,opacity] duration-500 ease-fluid ${
+                  hovered === 'en'
+                    ? 'translate-x-0.5 opacity-100'
+                    : '-translate-x-1 opacity-0'
                 }`}
               />
             </div>
@@ -534,23 +655,25 @@ function LanguagePicker({ onChoose }) {
             onClick={() => onChoose('es', remember)}
             onMouseEnter={() => setHovered('es')}
             onMouseLeave={() => setHovered(null)}
-            className="group rounded-2xl border border-ink/15 bg-paper px-5 py-5 text-left transition-[transform,border-color,box-shadow] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/40 hover:shadow-[0_18px_40px_-20px_rgba(26,22,16,0.2)]"
+            className="group rounded-xl border border-ink/15 bg-paper px-4 py-4 text-left transition-[transform,border-color,box-shadow] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/40 hover:shadow-[0_14px_30px_-16px_rgba(26,22,16,0.25)]"
           >
-            <div className="font-display text-xl tracking-tight text-ink">
+            <div className="font-display text-lg tracking-tight text-ink">
               Español
             </div>
-            <div className="mt-1 text-xs text-taupe inline-flex items-center gap-1.5">
+            <div className="mt-0.5 text-[11px] text-taupe inline-flex items-center gap-1">
               Hola.
               <ArrowRight
-                className={`h-3 w-3 transition-transform duration-500 ease-fluid ${
-                  hovered === 'es' ? 'translate-x-0.5' : '-translate-x-1 opacity-0'
+                className={`h-3 w-3 transition-[transform,opacity] duration-500 ease-fluid ${
+                  hovered === 'es'
+                    ? 'translate-x-0.5 opacity-100'
+                    : '-translate-x-1 opacity-0'
                 }`}
               />
             </div>
           </button>
         </div>
 
-        <label className="mt-7 flex items-center justify-center gap-2.5 cursor-pointer select-none">
+        <label className="mt-5 flex items-center justify-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={remember}
@@ -559,18 +682,14 @@ function LanguagePicker({ onChoose }) {
           />
           <span
             className={`relative inline-flex h-4 w-4 items-center justify-center rounded-[5px] border transition-colors duration-300 ${
-              remember
-                ? 'bg-ink border-ink'
-                : 'bg-paper border-ink/30 group-hover:border-ink/50'
+              remember ? 'bg-ink border-ink' : 'bg-paper border-ink/30'
             }`}
             aria-hidden
           >
-            {remember && (
-              <Check className="h-3 w-3 text-paper" strokeWidth={3} />
-            )}
+            {remember && <Check className="h-3 w-3 text-paper" strokeWidth={3} />}
           </span>
-          <span className="text-xs text-taupe">
-            Remember my choice · Recordar mi elección
+          <span className="text-[11px] text-taupe">
+            Remember · Recordar
           </span>
         </label>
       </div>
@@ -578,15 +697,13 @@ function LanguagePicker({ onChoose }) {
   )
 }
 
-function LanguageToggle({ compact = false }) {
+function LanguageToggle() {
   const { lang, setLang, t } = useLang()
   const isEs = lang === 'es'
 
   return (
     <div
-      className={`inline-flex items-center rounded-full border border-ink/10 bg-paper/60 backdrop-blur p-0.5 ${
-        compact ? 'text-[10px]' : 'text-[11px]'
-      }`}
+      className="inline-flex items-center rounded-full border border-ink/10 bg-paper/60 backdrop-blur p-0.5 text-[11px]"
       role="group"
       aria-label={t.nav.langLabel}
     >
@@ -614,9 +731,65 @@ function LanguageToggle({ compact = false }) {
   )
 }
 
+function CartButton({ count, onClick }) {
+  const { t } = useLang()
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={t.cart.open}
+      className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-paper/60 backdrop-blur text-ink transition-[transform,background-color,border-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:bg-paper hover:border-ink/20"
+    >
+      <ShoppingBag className="h-4 w-4" strokeWidth={1.75} />
+      {count > 0 && (
+        <span className="absolute -top-1 -right-1 inline-flex h-[18px] min-w-[18px] px-1 items-center justify-center rounded-full bg-ink text-paper text-[10px] font-semibold tabular-nums leading-none animate-scale-in">
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function QuantityStepper({ value, onChange, min = 1, max = 99, size = 'md' }) {
+  const sizes =
+    size === 'sm'
+      ? { h: 'h-8', btn: 'h-8 w-8', text: 'text-sm', icon: 'h-3 w-3' }
+      : { h: 'h-11', btn: 'h-11 w-11', text: 'text-base', icon: 'h-3.5 w-3.5' }
+  return (
+    <div
+      className={`inline-flex ${sizes.h} items-center rounded-full border border-ink/15 bg-paper`}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(min, value - 1))}
+        disabled={value <= min}
+        aria-label="Decrease"
+        className={`${sizes.btn} inline-flex items-center justify-center rounded-full text-umber transition-[background-color,color] duration-300 hover:bg-ink/5 hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-umber`}
+      >
+        <Minus className={sizes.icon} strokeWidth={2} />
+      </button>
+      <span
+        className={`${sizes.text} font-medium tabular-nums text-ink w-7 text-center`}
+        aria-live="polite"
+      >
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(Math.min(max, value + 1))}
+        disabled={value >= max}
+        aria-label="Increase"
+        className={`${sizes.btn} inline-flex items-center justify-center rounded-full text-umber transition-[background-color,color] duration-300 hover:bg-ink/5 hover:text-ink disabled:opacity-40`}
+      >
+        <Plus className={sizes.icon} strokeWidth={2} />
+      </button>
+    </div>
+  )
+}
+
 // ---- Sections ----
 
-function NavBar({ onFindUs }) {
+function NavBar({ onFindUs, cartCount, onOpenCart }) {
   const { t } = useLang()
   const scrolled = useScrolled(8)
   const [open, setOpen] = useState(false)
@@ -655,13 +828,14 @@ function NavBar({ onFindUs }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <div className="hidden sm:block">
             <LanguageToggle />
           </div>
+          <CartButton count={cartCount} onClick={onOpenCart} />
           <button
             onClick={onFindUs}
-            className="hidden sm:inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper shadow-sm transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E]"
+            className="hidden md:inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper shadow-sm transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E]"
           >
             <Navigation className="h-4 w-4" strokeWidth={1.75} />
             {t.nav.cta}
@@ -935,12 +1109,31 @@ function NoteSection() {
   )
 }
 
-function FlavorModal({ flavor, onClose }) {
+function FlavorModal({ flavor, onClose, onAdd }) {
   const { t } = useLang()
+  const [qty, setQty] = useState(1)
+  const [justAdded, setJustAdded] = useState(false)
+
   useEscapeKey(onClose, !!flavor)
   useLockBodyScroll(!!flavor)
 
+  useEffect(() => {
+    setQty(1)
+    setJustAdded(false)
+  }, [flavor?.id])
+
+  useEffect(() => {
+    if (!justAdded) return
+    const timer = setTimeout(() => setJustAdded(false), 1400)
+    return () => clearTimeout(timer)
+  }, [justAdded])
+
   if (!flavor) return null
+
+  const handleAdd = () => {
+    onAdd(flavor.id, qty)
+    setJustAdded(true)
+  }
 
   return (
     <div
@@ -954,9 +1147,9 @@ function FlavorModal({ flavor, onClose }) {
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full sm:max-w-2xl bg-cream sm:rounded-3xl rounded-t-3xl shadow-[0_40px_80px_-20px_rgba(26,22,16,0.35)] border border-ink/[0.06] overflow-hidden animate-scale-in"
+        className="relative w-full sm:max-w-2xl bg-cream sm:rounded-3xl rounded-t-3xl shadow-[0_40px_80px_-20px_rgba(26,22,16,0.35)] border border-ink/[0.06] overflow-hidden animate-scale-in flex flex-col max-h-[92vh] sm:max-h-[88vh]"
       >
-        <div className="relative h-36 sm:h-44 overflow-hidden">
+        <div className="relative h-32 sm:h-40 overflow-hidden shrink-0">
           <div className={`absolute inset-0 bg-gradient-to-br ${flavor.modalWash}`} />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-cream" />
           <div className="absolute inset-0 paper-grain opacity-50" />
@@ -977,7 +1170,7 @@ function FlavorModal({ flavor, onClose }) {
           </div>
         </div>
 
-        <div className="px-6 sm:px-8 py-7 sm:py-9 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
+        <div className="px-6 sm:px-8 py-6 sm:py-8 overflow-y-auto flex-1">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3
@@ -1027,6 +1220,31 @@ function FlavorModal({ flavor, onClose }) {
               {t.modal.allergenNote}
             </p>
           </div>
+        </div>
+
+        <div className="shrink-0 border-t border-ink/[0.07] bg-cream px-6 sm:px-8 py-4 sm:py-5 flex items-center gap-3">
+          <QuantityStepper value={qty} onChange={setQty} />
+          <button
+            onClick={handleAdd}
+            className={`group flex-1 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-[transform,background-color,box-shadow,color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg ${
+              justAdded
+                ? 'bg-emerald-600 text-paper'
+                : 'bg-ink text-paper hover:bg-[#23200E]'
+            }`}
+          >
+            {justAdded ? (
+              <>
+                <Check className="h-4 w-4" strokeWidth={2.4} />
+                {t.modal.added} · {fmt(qty * SINGLE_PRICE)}
+              </>
+            ) : (
+              <>
+                {t.modal.add}
+                <span className="opacity-70">·</span>
+                <span className="tabular-nums">{fmt(qty * SINGLE_PRICE)}</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
@@ -1226,6 +1444,458 @@ function PhilosophySection({ pillars }) {
   )
 }
 
+// ---- Cart & Checkout ----
+
+function CartLineItem({ item, onUpdate, onRemove }) {
+  const { t } = useLang()
+  return (
+    <div className="flex items-start gap-4 py-4">
+      <div
+        className={`relative h-16 w-12 sm:h-20 sm:w-14 rounded-xl overflow-hidden border border-ink/10 ${item.flavor.cardBg} shrink-0`}
+      >
+        <div
+          className={`absolute inset-x-0 -top-1 h-12 bg-gradient-to-b ${item.flavor.wash}`}
+        />
+        <div
+          className={`absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full ${item.flavor.dot}`}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-display text-lg leading-tight tracking-tight text-ink truncate">
+          {item.flavor.name}
+        </div>
+        <div className={`mt-0.5 text-xs ${item.flavor.accent}`}>
+          {item.flavor.english}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <QuantityStepper
+            value={item.qty}
+            onChange={(next) => onUpdate(item.id, next)}
+            size="sm"
+            min={0}
+          />
+          <div className="text-sm font-medium tabular-nums text-ink">
+            {fmt(item.qty * SINGLE_PRICE)}
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => onRemove(item.id)}
+        aria-label={t.cart.remove}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-taupe transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink"
+      >
+        <Trash2 className="h-4 w-4" strokeWidth={1.6} />
+      </button>
+    </div>
+  )
+}
+
+function CartDrawer({ open, onClose, items, onUpdate, onRemove, onCheckout, onSeeMenu }) {
+  const { t } = useLang()
+  const pricing = priceCart(items)
+
+  useEscapeKey(onClose, open)
+  useLockBodyScroll(open)
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        className={`fixed inset-0 z-[55] bg-ink/30 backdrop-blur-[3px] transition-opacity duration-500 ease-fluid ${
+          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden
+      />
+      <aside
+        role="dialog"
+        aria-label={t.cart.title}
+        aria-modal="true"
+        className={`fixed inset-y-0 right-0 z-[56] w-full sm:max-w-[440px] bg-cream border-l border-ink/10 shadow-[-30px_0_60px_-20px_rgba(26,22,16,0.25)] transition-transform duration-500 ease-fluid flex flex-col ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b border-ink/[0.07]">
+          <div>
+            <div className="font-display text-2xl tracking-tightest text-ink leading-tight">
+              {t.cart.title}
+            </div>
+            {pricing.count > 0 && (
+              <div className="text-xs text-taupe mt-0.5">
+                {pricing.count}{' '}
+                {pricing.count === 1 ? t.cart.itemSingular : t.cart.itemPlural}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label={t.cart.close}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 text-ink transition-[background-color,color,transform] duration-500 ease-fluid hover:bg-ink hover:text-paper hover:rotate-90"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {pricing.count === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-paper border border-ink/[0.07] text-taupe">
+              <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+            </div>
+            <div className="mt-5 font-display text-xl tracking-tight text-ink">
+              {t.cart.empty}
+            </div>
+            <p className="mt-2 text-sm text-taupe max-w-[18rem]">
+              {t.cart.emptyHint}
+            </p>
+            <button
+              onClick={() => {
+                onClose()
+                onSeeMenu()
+              }}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-[transform,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:bg-[#23200E]"
+            >
+              {t.cart.seeMenu}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-y-auto px-6 divide-y divide-ink/[0.06]">
+              {items.map((item) => (
+                <CartLineItem
+                  key={item.id}
+                  item={item}
+                  onUpdate={onUpdate}
+                  onRemove={onRemove}
+                />
+              ))}
+              <div className="py-4 text-xs text-taupe inline-flex items-start gap-2">
+                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" strokeWidth={1.6} />
+                <span>{t.cart.pickupNote}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-ink/[0.07] bg-paper/60 px-6 py-5">
+              <dl className="space-y-2 text-sm">
+                <div className="flex items-center justify-between text-umber">
+                  <dt>{t.cart.subtotal}</dt>
+                  <dd className="tabular-nums">{fmt(pricing.subtotal)}</dd>
+                </div>
+                {pricing.savings > 0 && (
+                  <div className="flex items-center justify-between text-emerald-700">
+                    <dt>{t.cart.deal}</dt>
+                    <dd className="tabular-nums">−{fmt(pricing.savings)}</dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-2 mt-2 border-t border-ink/[0.07] text-ink">
+                  <dt className="font-display text-lg tracking-tight">
+                    {t.cart.total}
+                  </dt>
+                  <dd className="font-display text-2xl tracking-tightest tabular-nums">
+                    {fmt(pricing.total)}
+                  </dd>
+                </div>
+              </dl>
+
+              <button
+                onClick={onCheckout}
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-paper transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E]"
+              >
+                {t.cart.checkout} · {fmt(pricing.total)}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </>
+        )}
+      </aside>
+    </>
+  )
+}
+
+function CheckoutModal({ open, onClose, items, onComplete }) {
+  const { t } = useLang()
+  const pricing = priceCart(items)
+  const [stage, setStage] = useState('form')
+  const [form, setForm] = useState({ name: '', number: '', expiry: '', cvc: '' })
+  const [orderNumber, setOrderNumber] = useState('')
+
+  useEscapeKey(() => {
+    if (stage !== 'processing') onClose()
+  }, open)
+  useLockBodyScroll(open)
+
+  useEffect(() => {
+    if (!open) {
+      setStage('form')
+      setForm({ name: '', number: '', expiry: '', cvc: '' })
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (stage !== 'processing') return
+    const id = setTimeout(() => {
+      setOrderNumber(generateOrderNumber())
+      setStage('success')
+    }, 1600)
+    return () => clearTimeout(id)
+  }, [stage])
+
+  if (!open) return null
+
+  const fillDemo = () => {
+    setForm({
+      name: 'Demo · Elyra',
+      number: formatCardNumber('4242424242424242'),
+      expiry: formatExpiry('1228'),
+      cvc: '123',
+    })
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setStage('processing')
+  }
+
+  const formValid =
+    form.name.trim().length > 1 &&
+    form.number.replace(/\s/g, '').length >= 12 &&
+    form.expiry.replace(/\D/g, '').length >= 3 &&
+    form.cvc.length >= 3
+
+  const handleDone = () => {
+    onComplete()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[58] flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.checkout.title}
+      onClick={() => {
+        if (stage !== 'processing') onClose()
+      }}
+    >
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-md" />
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full sm:max-w-lg bg-cream sm:rounded-3xl rounded-t-3xl border border-ink/[0.06] shadow-[0_40px_80px_-20px_rgba(26,22,16,0.45)] overflow-hidden animate-scale-in flex flex-col max-h-[92vh]"
+      >
+        <div className="flex items-center justify-between px-6 sm:px-7 py-4 border-b border-ink/[0.07]">
+          <div className="inline-flex items-center gap-2.5">
+            <div className="font-display text-xl tracking-tight text-ink">
+              {t.checkout.title}
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]">
+              {t.checkout.demoLabel}
+            </span>
+          </div>
+          {stage !== 'processing' && (
+            <button
+              onClick={onClose}
+              aria-label={t.modal.close}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink transition-[background-color,color,transform] duration-500 ease-fluid hover:bg-ink hover:text-paper hover:rotate-90"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {stage === 'form' && (
+          <div className="flex-1 overflow-y-auto px-6 sm:px-7 py-5 sm:py-6">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-900 leading-relaxed">
+              {t.checkout.demoNote}
+            </div>
+
+            <div className="mt-6">
+              <h4 className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
+                {t.checkout.summary}
+              </h4>
+              <ul className="mt-3 space-y-2 text-sm">
+                {items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 text-umber"
+                  >
+                    <span className="inline-flex items-center gap-2.5 min-w-0">
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full ${item.flavor.dot}`}
+                      />
+                      <span className="truncate text-ink">
+                        {item.flavor.name}
+                      </span>
+                      <span className="text-taupe">× {item.qty}</span>
+                    </span>
+                    <span className="tabular-nums">
+                      {fmt(item.qty * SINGLE_PRICE)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <dl className="mt-4 pt-4 border-t border-ink/[0.07] space-y-1.5 text-sm">
+                <div className="flex items-center justify-between text-umber">
+                  <dt>{t.cart.subtotal}</dt>
+                  <dd className="tabular-nums">{fmt(pricing.subtotal)}</dd>
+                </div>
+                {pricing.savings > 0 && (
+                  <div className="flex items-center justify-between text-emerald-700">
+                    <dt>{t.cart.deal}</dt>
+                    <dd className="tabular-nums">−{fmt(pricing.savings)}</dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-2 mt-1 border-t border-ink/[0.07] text-ink">
+                  <dt className="font-medium">{t.cart.total}</dt>
+                  <dd className="font-display text-xl tracking-tightest tabular-nums">
+                    {fmt(pricing.total)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
+                  {t.checkout.payment}
+                </h4>
+                <button
+                  type="button"
+                  onClick={fillDemo}
+                  className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700 hover:text-rose-800 transition-colors duration-300"
+                >
+                  {t.checkout.useDemoCard}
+                </button>
+              </div>
+
+              <label className="block">
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
+                  {t.checkout.cardName}
+                </span>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((s) => ({ ...s, name: e.target.value }))
+                  }
+                  placeholder={t.checkout.cardNamePlaceholder}
+                  className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
+                  autoComplete="cc-name"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
+                  {t.checkout.cardNumber}
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={form.number}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      number: formatCardNumber(e.target.value),
+                    }))
+                  }
+                  placeholder="4242 4242 4242 4242"
+                  className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink tabular-nums tracking-wider placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
+                  autoComplete="cc-number"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
+                    {t.checkout.cardExpiry}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={form.expiry}
+                    onChange={(e) =>
+                      setForm((s) => ({
+                        ...s,
+                        expiry: formatExpiry(e.target.value),
+                      }))
+                    }
+                    placeholder="MM / YY"
+                    className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink tabular-nums placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
+                    autoComplete="cc-exp"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
+                    {t.checkout.cardCvc}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={form.cvc}
+                    onChange={(e) =>
+                      setForm((s) => ({
+                        ...s,
+                        cvc: e.target.value.replace(/\D/g, '').slice(0, 4),
+                      }))
+                    }
+                    placeholder="123"
+                    className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink tabular-nums placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
+                    autoComplete="cc-csc"
+                  />
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!formValid}
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-paper transition-[transform,box-shadow,background-color,opacity] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E] disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              >
+                {t.checkout.pay} · {fmt(pricing.total)}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {stage === 'processing' && (
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
+            <Loader2 className="h-7 w-7 text-ink animate-spin" strokeWidth={1.5} />
+            <div className="mt-5 font-display text-xl tracking-tight text-ink">
+              {t.checkout.processing}
+            </div>
+          </div>
+        )}
+
+        {stage === 'success' && (
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:py-16 text-center">
+            <div className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300/60">
+              <CheckCircle2 className="h-7 w-7" strokeWidth={1.5} />
+            </div>
+            <div className="mt-6 font-display text-3xl sm:text-4xl tracking-tightest text-ink leading-tight">
+              {t.checkout.successTitle}
+            </div>
+            <p className="mt-3 text-sm text-umber max-w-sm">
+              {t.checkout.successNote}
+            </p>
+            <div className="mt-6 rounded-2xl border border-ink/[0.07] bg-paper/70 px-5 py-3 text-sm">
+              <span className="text-taupe uppercase tracking-[0.18em] text-[11px]">
+                {t.checkout.orderNumberLabel}
+              </span>
+              <span className="ml-2 font-display tabular-nums text-ink">
+                #{orderNumber}
+              </span>
+            </div>
+            <button
+              onClick={handleDone}
+              className="mt-7 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-medium text-paper transition-[transform,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:bg-[#23200E]"
+            >
+              {t.checkout.done}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function Footer() {
   const { t } = useLang()
 
@@ -1300,6 +1970,9 @@ function Footer() {
 
 export default function App() {
   const [activeFlavorId, setActiveFlavorId] = useState(null)
+  const [cart, setCart] = useState([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [lang, setLangState] = useState(() => {
     if (typeof window === 'undefined') return null
     const saved = window.localStorage.getItem(STORAGE_KEY)
@@ -1320,7 +1993,7 @@ export default function App() {
     try {
       window.localStorage.setItem(STORAGE_KEY, next)
     } catch {
-      /* storage unavailable, swallow */
+      /* swallow */
     }
   }
 
@@ -1338,10 +2011,53 @@ export default function App() {
 
   const activeLang = lang || 'en'
   const t = COPY[activeLang]
-  const flavors = FLAVORS.map((f) => ({ ...f, ...f.copy[activeLang] }))
+
+  const flavors = useMemo(
+    () => FLAVORS.map((f) => ({ ...f, ...f.copy[activeLang] })),
+    [activeLang],
+  )
   const pillars = PILLARS[activeLang]
+
   const activeFlavor =
     activeFlavorId == null ? null : flavors.find((f) => f.id === activeFlavorId)
+
+  const cartItems = useMemo(
+    () =>
+      cart
+        .map((line) => {
+          const flavor = flavors.find((f) => f.id === line.id)
+          return flavor ? { id: line.id, qty: line.qty, flavor } : null
+        })
+        .filter(Boolean),
+    [cart, flavors],
+  )
+
+  const cartCount = cart.reduce((sum, line) => sum + line.qty, 0)
+
+  const addToCart = (id, qty) => {
+    setCart((prev) => {
+      const existing = prev.find((line) => line.id === id)
+      if (existing) {
+        return prev.map((line) =>
+          line.id === id ? { ...line, qty: line.qty + qty } : line,
+        )
+      }
+      return [...prev, { id, qty }]
+    })
+    setCartOpen(true)
+  }
+
+  const updateQty = (id, qty) => {
+    setCart((prev) =>
+      qty <= 0
+        ? prev.filter((line) => line.id !== id)
+        : prev.map((line) => (line.id === id ? { ...line, qty } : line)),
+    )
+  }
+
+  const removeFromCart = (id) => {
+    setCart((prev) => prev.filter((line) => line.id !== id))
+  }
 
   const scrollToLocation = () => {
     const el = document.getElementById('location')
@@ -1352,10 +2068,24 @@ export default function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const handleCheckout = () => {
+    setCartOpen(false)
+    setCheckoutOpen(true)
+  }
+
+  const handleCheckoutComplete = () => {
+    setCheckoutOpen(false)
+    setCart([])
+  }
+
   return (
     <LangContext.Provider value={{ lang: activeLang, t, setLang }}>
       <div className="min-h-screen bg-paper text-ink antialiased">
-        <NavBar onFindUs={scrollToLocation} />
+        <NavBar
+          onFindUs={scrollToLocation}
+          cartCount={cartCount}
+          onOpenCart={() => setCartOpen(true)}
+        />
         <main>
           <Hero onSeeMenu={scrollToMenu} onFindUs={scrollToLocation} />
           <MenuSection
@@ -1367,10 +2097,30 @@ export default function App() {
           <PhilosophySection pillars={pillars} />
         </main>
         <Footer />
+
         <FlavorModal
           flavor={activeFlavor}
           onClose={() => setActiveFlavorId(null)}
+          onAdd={addToCart}
         />
+
+        <CartDrawer
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          items={cartItems}
+          onUpdate={updateQty}
+          onRemove={removeFromCart}
+          onCheckout={handleCheckout}
+          onSeeMenu={scrollToMenu}
+        />
+
+        <CheckoutModal
+          open={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          items={cartItems}
+          onComplete={handleCheckoutComplete}
+        />
+
         {showPicker && <LanguagePicker onChoose={handlePickerChoice} />}
       </div>
     </LangContext.Provider>
