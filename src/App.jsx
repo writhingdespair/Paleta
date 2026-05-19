@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
   Calendar,
+  Check,
   Clock,
   CreditCard,
   Instagram,
@@ -14,113 +15,358 @@ import {
   X,
 } from 'lucide-react'
 
-const flavors = [
+const STORAGE_KEY = 'elyra-lang'
+
+const COPY = {
+  en: {
+    nav: {
+      menu: 'Menu',
+      findUs: 'Find Us',
+      philosophy: 'Our Philosophy',
+      cta: 'Find Us',
+      langLabel: 'Language',
+    },
+    hero: {
+      pill: 'Highland, NY · Open every day · 11–7',
+      title: ['Mexican Paletas.', 'This Summer.'],
+      subtitle: 'Real fruit. Real cream. No stabilizers, no shortcuts.',
+      single: '$4 Single',
+      deal: '2 for $6',
+      seeMenu: 'See the Menu',
+      findUs: 'Find Us',
+    },
+    menu: {
+      eyebrow: 'The Menu',
+      title: ['Four flavors.', 'Made this morning.'],
+      blurb:
+        'Tap a flavor for the full ingredient list. Every bar is made and frozen the day we sell it.',
+      chip: 'Cream Base',
+      perBar: 'per bar',
+      viewDetails: 'View Details',
+    },
+    modal: {
+      kcalBar: 'kcal / bar',
+      ingredients: 'Ingredients',
+      allergens: 'Allergens',
+      allergenNote:
+        'Contains dairy. May contain tree nuts. No artificial stabilizers, emulsifiers, or colors.',
+      close: 'Close details',
+    },
+    note: null,
+    location: {
+      eyebrow: 'Find Us',
+      title: ['On 9W.', 'Every day.'],
+      blurb:
+        'Same spot all summer in Highland, NY. Pull over, grab a bar, keep going.',
+      stand: 'The Stand',
+      openNow: 'Open Now',
+      openSummer: 'Open for the Summer',
+      hours: 'Hours',
+      hoursValue: '11 AM – 7 PM',
+      everyDay: 'Open every day',
+      card: 'Card',
+      cardValue: 'Tap & Apple Pay',
+      cash: 'Cash',
+      cashValue: 'Always welcome',
+      openMaps: 'Open in Maps',
+      copyAddress: 'Copy Address',
+    },
+    philosophy: {
+      eyebrow: 'Our Philosophy',
+      title: 'How we make them.',
+      blurb:
+        'From the cream we buy to the way we freeze the bars, we keep it simple. Real fruit. Real cream. Made by hand. Sold the same day.',
+    },
+    footer: {
+      tagline: 'Cold bars on 9W.',
+      rights: 'All rights reserved.',
+    },
+    picker: {
+      eyebrow: 'Welcome · Bienvenido',
+      heading: 'Choose your language',
+      sub: 'Elige tu idioma',
+      en: 'English',
+      enHi: 'Hello.',
+      es: 'Español',
+      esHi: 'Hola.',
+      remember: 'Remember my choice · Recordar mi elección',
+    },
+  },
+  es: {
+    nav: {
+      menu: 'Menú',
+      findUs: 'Encuéntranos',
+      philosophy: 'Filosofía',
+      cta: 'Encuéntranos',
+      langLabel: 'Idioma',
+    },
+    hero: {
+      pill: 'Highland, NY · Abierto todos los días · 11–7',
+      title: ['Paletas Mexicanas.', 'Este Verano.'],
+      subtitle: 'Fruta natural. Crema de la buena. Sin estabilizadores. Sin atajos.',
+      single: '$4 c/u',
+      deal: '2 x $6',
+      seeMenu: 'Ver el Menú',
+      findUs: 'Encuéntranos',
+    },
+    menu: {
+      eyebrow: 'El Menú',
+      title: ['Cuatro sabores.', 'Hechas esta mañana.'],
+      blurb:
+        'Toca un sabor para ver los ingredientes. Cada paleta se hace y se congela el mismo día que la vendemos.',
+      chip: 'Base de Crema',
+      perBar: 'por paleta',
+      viewDetails: 'Ver Detalles',
+    },
+    modal: {
+      kcalBar: 'kcal / paleta',
+      ingredients: 'Ingredientes',
+      allergens: 'Alérgenos',
+      allergenNote:
+        'Contiene lácteos. Puede contener nueces. Sin estabilizadores, emulsificantes ni colorantes artificiales.',
+      close: 'Cerrar detalles',
+    },
+    note: {
+      eyebrow: 'Una nota',
+      title: 'Como las de la plaza.',
+      body: 'Crecimos comiendo paletas en el calor del verano — esas de crema espesa, con fresa de verdad, que vendían en carritos por las plazas. Cuando llegamos al valle del Hudson, no las encontramos por ningún lado. Así que decidimos hacerlas nosotros mismos: mismas recetas, mismo cariño, mismo sabor de infancia. Ahora, aquí en la 9W.',
+      sign: '— La familia Elyra',
+    },
+    location: {
+      eyebrow: 'Encuéntranos',
+      title: ['En la 9W.', 'Todos los días.'],
+      blurb:
+        'Mismo lugar todo el verano en Highland, NY. Te paras, agarras una paleta, y sigues con tu día.',
+      stand: 'El Puesto',
+      openNow: 'Abierto',
+      openSummer: 'Abierto Todo el Verano',
+      hours: 'Horario',
+      hoursValue: '11 AM – 7 PM',
+      everyDay: 'Abierto todos los días',
+      card: 'Tarjeta',
+      cardValue: 'Tap y Apple Pay',
+      cash: 'Efectivo',
+      cashValue: 'Siempre bienvenido',
+      openMaps: 'Abrir en Maps',
+      copyAddress: 'Copiar Dirección',
+    },
+    philosophy: {
+      eyebrow: 'Nuestra Filosofía',
+      title: 'Así las hacemos.',
+      blurb:
+        'Desde la crema que escogemos hasta cómo las congelamos, lo hacemos sencillo. Fruta de verdad. Crema de verdad. Hechas a mano. Vendidas el mismo día — como debe ser.',
+    },
+    footer: {
+      tagline: 'Paletas heladas en la 9W.',
+      rights: 'Todos los derechos reservados.',
+    },
+    picker: {
+      eyebrow: 'Welcome · Bienvenido',
+      heading: 'Choose your language',
+      sub: 'Elige tu idioma',
+      en: 'English',
+      enHi: 'Hello.',
+      es: 'Español',
+      esHi: 'Hola.',
+      remember: 'Remember my choice · Recordar mi elección',
+    },
+  },
+}
+
+const FLAVORS = [
   {
     id: 'fresas',
     name: 'Fresas con Crema',
-    english: 'Strawberry Cream',
-    tagline: 'Strawberries and cream. Real ones.',
-    description:
-      'Real strawberries, sweet cream, a little condensed milk. We hand-cut the strawberries so you actually bite into them.',
     calories: 200,
-    ingredients: [
-      'Strawberries',
-      'Sweetened Condensed Milk',
-      'Heavy Cream',
-      'Mexican Crema',
-      'Whole Milk',
-      'Vanilla',
-    ],
     accent: 'text-rose-700',
     dot: 'bg-rose-500',
     wash: 'from-rose-200/70 via-rose-100/30 to-transparent',
     cardBg: 'bg-[#FBEEEA]',
     cardHover: 'hover:border-rose-300/80',
     modalWash: 'from-rose-300/70 via-rose-200/30 to-transparent',
+    copy: {
+      en: {
+        english: 'Strawberry Cream',
+        tagline: 'Strawberries and cream. Real ones.',
+        description:
+          'Real strawberries, sweet cream, a little condensed milk. We hand-cut the strawberries so you actually bite into them.',
+        ingredients: [
+          'Strawberries',
+          'Sweetened Condensed Milk',
+          'Heavy Cream',
+          'Mexican Crema',
+          'Whole Milk',
+          'Vanilla',
+        ],
+      },
+      es: {
+        english: 'Estilo Michoacán',
+        tagline: 'Fresas y crema. De las buenas.',
+        description:
+          'Fresas de verdad, crema dulce y un toque de leche condensada. Cortamos las fresas a mano para que las sientas en cada mordida — como las paletas de la plaza, pero con fresa fresca del valle del Hudson.',
+        ingredients: [
+          'Fresas',
+          'Leche Condensada',
+          'Crema Espesa',
+          'Crema Mexicana',
+          'Leche Entera',
+          'Vainilla',
+        ],
+      },
+    },
   },
   {
     id: 'mango',
     name: 'Mango con Crema',
-    english: 'Mango Cream',
-    tagline: "Mango and cream. That's it.",
-    description: 'Ripe mango blended into sweet cream. Smooth, bright, cold.',
     calories: 190,
-    ingredients: [
-      'Mango',
-      'Sweetened Condensed Milk',
-      'Heavy Cream',
-      'Mexican Crema',
-      'Whole Milk',
-    ],
     accent: 'text-amber-800',
     dot: 'bg-amber-500',
     wash: 'from-amber-200/70 via-amber-100/30 to-transparent',
     cardBg: 'bg-[#FBF1DC]',
     cardHover: 'hover:border-amber-300/80',
     modalWash: 'from-amber-300/70 via-amber-200/30 to-transparent',
+    copy: {
+      en: {
+        english: 'Mango Cream',
+        tagline: "Mango and cream. That's it.",
+        description: 'Ripe mango blended into sweet cream. Smooth, bright, cold.',
+        ingredients: [
+          'Mango',
+          'Sweetened Condensed Milk',
+          'Heavy Cream',
+          'Mexican Crema',
+          'Whole Milk',
+        ],
+      },
+      es: {
+        english: 'Mango ataulfo, en crema',
+        tagline: 'Mango y crema. Nada más.',
+        description:
+          'Mango bien maduro, batido con crema dulce. Suave, brillante, y bien fría — la indicada para el calor del verano.',
+        ingredients: [
+          'Mango',
+          'Leche Condensada',
+          'Crema Espesa',
+          'Crema Mexicana',
+          'Leche Entera',
+        ],
+      },
+    },
   },
   {
     id: 'coco',
     name: 'Coco Loco',
-    english: 'Coconut Cream',
-    tagline: 'Coconut cream, loaded with toasted coconut.',
-    description:
-      'Thick coconut cream loaded with toasted shredded coconut. Heavy bar, lots of texture.',
     calories: 240,
-    ingredients: [
-      'Coconut Milk',
-      'Sweetened Condensed Milk',
-      'Heavy Cream',
-      'Toasted Shredded Coconut',
-    ],
     accent: 'text-stone-700',
     dot: 'bg-stone-500',
     wash: 'from-stone-200/70 via-stone-100/30 to-transparent',
     cardBg: 'bg-[#F5EFE2]',
     cardHover: 'hover:border-stone-300/80',
     modalWash: 'from-stone-300/70 via-stone-200/30 to-transparent',
+    copy: {
+      en: {
+        english: 'Coconut Cream',
+        tagline: 'Coconut cream, loaded with toasted coconut.',
+        description:
+          'Thick coconut cream loaded with toasted shredded coconut. Heavy bar, lots of texture.',
+        ingredients: [
+          'Coconut Milk',
+          'Sweetened Condensed Milk',
+          'Heavy Cream',
+          'Toasted Shredded Coconut',
+        ],
+      },
+      es: {
+        english: 'Con coco tostado',
+        tagline: 'Crema de coco, con harto coco encima.',
+        description:
+          'Crema de coco bien densa, con harto coco rallado tostado adentro. Una paleta pesada, con textura — de las que se sienten en la mordida.',
+        ingredients: [
+          'Leche de Coco',
+          'Leche Condensada',
+          'Crema Espesa',
+          'Coco Rallado Tostado',
+        ],
+      },
+    },
   },
   {
     id: 'horchata',
     name: 'Horchata Classic',
-    english: 'Cinnamon & Rice Milk',
-    tagline: 'Rice milk, cinnamon. The way it should be.',
-    description:
-      'Rice milk, cinnamon, condensed milk — the classic, frozen into a thick bar.',
     calories: 180,
-    ingredients: [
-      'Rice Milk',
-      'Whole Milk',
-      'Sweetened Condensed Milk',
-      'Vanilla',
-      'Ceylon Cinnamon',
-    ],
     accent: 'text-orange-800',
     dot: 'bg-orange-500',
     wash: 'from-orange-200/70 via-orange-100/30 to-transparent',
     cardBg: 'bg-[#FBEEDC]',
     cardHover: 'hover:border-orange-300/80',
     modalWash: 'from-orange-300/70 via-orange-200/30 to-transparent',
+    copy: {
+      en: {
+        english: 'Cinnamon & Rice Milk',
+        tagline: 'Rice milk, cinnamon. The way it should be.',
+        description:
+          'Rice milk, cinnamon, condensed milk — the classic, frozen into a thick bar.',
+        ingredients: [
+          'Rice Milk',
+          'Whole Milk',
+          'Sweetened Condensed Milk',
+          'Vanilla',
+          'Ceylon Cinnamon',
+        ],
+      },
+      es: {
+        english: 'La clásica, como debe ser',
+        tagline: 'Horchata con canela. Como debe ser.',
+        description:
+          'Horchata de arroz, canela y leche condensada — la clásica de toda la vida, ahora en paleta gruesa y bien fría.',
+        ingredients: [
+          'Horchata de Arroz',
+          'Leche Entera',
+          'Leche Condensada',
+          'Vainilla',
+          'Canela de Ceilán',
+        ],
+      },
+    },
   },
 ]
 
-const pillars = [
-  {
-    number: '01',
-    title: 'Thick, Not Watery',
-    body: "Heavy cream and condensed milk. That's why our bars bite like fudge, not like ice.",
-  },
-  {
-    number: '02',
-    title: 'Real Fruit, Not Syrup',
-    body: "We cut the fruit by hand and drop it straight into the molds. You'll find pieces.",
-  },
-  {
-    number: '03',
-    title: 'Like Abuelita Made It',
-    body: "Old recipes, made by hand. No shortcuts, no fillers — the way it's done at home.",
-  },
-]
+const PILLARS = {
+  en: [
+    {
+      number: '01',
+      title: 'Thick, Not Watery',
+      body: "Heavy cream and condensed milk. That's why our bars bite like fudge, not like ice.",
+    },
+    {
+      number: '02',
+      title: 'Real Fruit, Not Syrup',
+      body: "We cut the fruit by hand and drop it straight into the molds. You'll find pieces.",
+    },
+    {
+      number: '03',
+      title: 'Like Abuelita Made It',
+      body: "Old recipes, made by hand. No shortcuts, no fillers — the way it's done at home.",
+    },
+  ],
+  es: [
+    {
+      number: '01',
+      title: 'Espesa, No Aguada',
+      body: 'Crema espesa y leche condensada. Por eso nuestras paletas se sienten densas, como deben ser — no como hielo aguado.',
+    },
+    {
+      number: '02',
+      title: 'Fruta de Verdad, No Jarabe',
+      body: 'La fruta la cortamos a mano y la echamos directo al molde. Sí, vas a encontrar trozos.',
+    },
+    {
+      number: '03',
+      title: 'Como las Hacía la Abuela',
+      body: 'Recetas de toda la vida, hechas a mano. Sin atajos, sin rellenos — como las hacíamos en casa.',
+    },
+  ],
+}
 
 const LOCATION = {
   street: '3448 US-9W',
@@ -129,6 +375,8 @@ const LOCATION = {
   mapsUrl:
     'https://www.google.com/maps/search/?api=1&query=3448+US-9W+Highland+NY+12528',
 }
+
+// ---- Hooks ----
 
 function useEscapeKey(handler, enabled) {
   useEffect(() => {
@@ -218,14 +466,165 @@ function useScrolled(threshold = 8) {
   return scrolled
 }
 
+// ---- Language ----
+
+const LangContext = createContext({ lang: 'en', t: COPY.en, setLang: () => {} })
+const useLang = () => useContext(LangContext)
+
+function LanguagePicker({ onChoose }) {
+  const [remember, setRemember] = useState(true)
+  const [hovered, setHovered] = useState(null)
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-6 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lang-picker-title"
+    >
+      <div className="absolute inset-0 bg-paper" />
+      <div className="absolute inset-0 -z-0 pointer-events-none">
+        <div className="absolute -top-40 right-[-12%] h-[34rem] w-[34rem] rounded-full bg-orange-300/45 blur-[110px]" />
+        <div className="absolute top-40 left-[-12%] h-[26rem] w-[26rem] rounded-full bg-rose-300/40 blur-[110px]" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[22rem] w-[58rem] rounded-full bg-amber-200/40 blur-[120px]" />
+        <div className="absolute inset-0 paper-grain opacity-60" />
+      </div>
+
+      <div className="relative w-full max-w-md rounded-3xl border border-ink/[0.08] bg-cream p-8 sm:p-10 shadow-[0_40px_80px_-20px_rgba(26,22,16,0.18)] animate-scale-in">
+        <div className="text-center">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-taupe">
+            Welcome · Bienvenido
+          </div>
+          <div className="mt-4 font-display text-5xl tracking-tightest text-ink">
+            Elyra
+          </div>
+          <div className="mt-3 h-[2px] w-10 mx-auto rounded-full bg-rose-400" />
+        </div>
+
+        <div className="mt-8 text-center">
+          <div
+            id="lang-picker-title"
+            className="font-display text-lg text-ink"
+          >
+            Choose your language
+          </div>
+          <div className="mt-0.5 text-sm text-taupe">Elige tu idioma</div>
+        </div>
+
+        <div className="mt-7 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => onChoose('en', remember)}
+            onMouseEnter={() => setHovered('en')}
+            onMouseLeave={() => setHovered(null)}
+            className="group rounded-2xl border border-ink/15 bg-paper px-5 py-5 text-left transition-[transform,border-color,box-shadow] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/40 hover:shadow-[0_18px_40px_-20px_rgba(26,22,16,0.2)]"
+          >
+            <div className="font-display text-xl tracking-tight text-ink">
+              English
+            </div>
+            <div className="mt-1 text-xs text-taupe inline-flex items-center gap-1.5">
+              Hello.
+              <ArrowRight
+                className={`h-3 w-3 transition-transform duration-500 ease-fluid ${
+                  hovered === 'en' ? 'translate-x-0.5' : '-translate-x-1 opacity-0'
+                }`}
+              />
+            </div>
+          </button>
+          <button
+            onClick={() => onChoose('es', remember)}
+            onMouseEnter={() => setHovered('es')}
+            onMouseLeave={() => setHovered(null)}
+            className="group rounded-2xl border border-ink/15 bg-paper px-5 py-5 text-left transition-[transform,border-color,box-shadow] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/40 hover:shadow-[0_18px_40px_-20px_rgba(26,22,16,0.2)]"
+          >
+            <div className="font-display text-xl tracking-tight text-ink">
+              Español
+            </div>
+            <div className="mt-1 text-xs text-taupe inline-flex items-center gap-1.5">
+              Hola.
+              <ArrowRight
+                className={`h-3 w-3 transition-transform duration-500 ease-fluid ${
+                  hovered === 'es' ? 'translate-x-0.5' : '-translate-x-1 opacity-0'
+                }`}
+              />
+            </div>
+          </button>
+        </div>
+
+        <label className="mt-7 flex items-center justify-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="sr-only"
+          />
+          <span
+            className={`relative inline-flex h-4 w-4 items-center justify-center rounded-[5px] border transition-colors duration-300 ${
+              remember
+                ? 'bg-ink border-ink'
+                : 'bg-paper border-ink/30 group-hover:border-ink/50'
+            }`}
+            aria-hidden
+          >
+            {remember && (
+              <Check className="h-3 w-3 text-paper" strokeWidth={3} />
+            )}
+          </span>
+          <span className="text-xs text-taupe">
+            Remember my choice · Recordar mi elección
+          </span>
+        </label>
+      </div>
+    </div>
+  )
+}
+
+function LanguageToggle({ compact = false }) {
+  const { lang, setLang, t } = useLang()
+  const isEs = lang === 'es'
+
+  return (
+    <div
+      className={`inline-flex items-center rounded-full border border-ink/10 bg-paper/60 backdrop-blur p-0.5 ${
+        compact ? 'text-[10px]' : 'text-[11px]'
+      }`}
+      role="group"
+      aria-label={t.nav.langLabel}
+    >
+      <button
+        type="button"
+        onClick={() => setLang('en')}
+        aria-pressed={!isEs}
+        className={`px-2.5 py-1.5 rounded-full font-semibold tracking-[0.18em] transition-[background-color,color] duration-300 ${
+          !isEs ? 'bg-ink text-paper' : 'text-umber hover:text-ink'
+        }`}
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        onClick={() => setLang('es')}
+        aria-pressed={isEs}
+        className={`px-2.5 py-1.5 rounded-full font-semibold tracking-[0.18em] transition-[background-color,color] duration-300 ${
+          isEs ? 'bg-ink text-paper' : 'text-umber hover:text-ink'
+        }`}
+      >
+        ES
+      </button>
+    </div>
+  )
+}
+
+// ---- Sections ----
+
 function NavBar({ onFindUs }) {
+  const { t } = useLang()
   const scrolled = useScrolled(8)
   const [open, setOpen] = useState(false)
 
   const navLinks = [
-    { href: '#menu', label: 'Menu' },
-    { href: '#location', label: 'Find Us' },
-    { href: '#philosophy', label: 'Our Philosophy' },
+    { href: '#menu', label: t.nav.menu },
+    { href: '#location', label: t.nav.findUs },
+    { href: '#philosophy', label: t.nav.philosophy },
   ]
 
   return (
@@ -256,18 +655,21 @@ function NavBar({ onFindUs }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="hidden sm:block">
+            <LanguageToggle />
+          </div>
           <button
             onClick={onFindUs}
             className="hidden sm:inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper shadow-sm transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E]"
           >
             <Navigation className="h-4 w-4" strokeWidth={1.75} />
-            Find Us
+            {t.nav.cta}
           </button>
           <button
             onClick={() => setOpen((v) => !v)}
             className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 text-ink transition-colors duration-300 hover:bg-ink/5"
-            aria-label="Open menu"
+            aria-label="Menu"
           >
             {open ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
           </button>
@@ -287,6 +689,12 @@ function NavBar({ onFindUs }) {
                 {link.label}
               </a>
             ))}
+            <div className="mt-2 flex items-center justify-between gap-3 px-3 py-2">
+              <span className="text-xs uppercase tracking-[0.22em] text-taupe">
+                {t.nav.langLabel}
+              </span>
+              <LanguageToggle />
+            </div>
             <button
               onClick={() => {
                 setOpen(false)
@@ -294,7 +702,7 @@ function NavBar({ onFindUs }) {
               }}
               className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-paper"
             >
-              <Navigation className="h-4 w-4" /> Find Us
+              <Navigation className="h-4 w-4" /> {t.nav.cta}
             </button>
           </div>
         </div>
@@ -304,6 +712,7 @@ function NavBar({ onFindUs }) {
 }
 
 function Hero({ onSeeMenu, onFindUs }) {
+  const { t } = useLang()
   const blobA = useParallax(0.14)
   const blobB = useParallax(-0.08)
   const blobC = useParallax(0.06)
@@ -337,23 +746,23 @@ function Hero({ onSeeMenu, onFindUs }) {
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-pulse-dot" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
             </span>
-            Highland, NY · Open every day · 11–7
+            {t.hero.pill}
           </span>
 
           <h1
             className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-[5.25rem] leading-[1.02] tracking-tightest text-ink text-balance max-w-5xl animate-subtle-rise"
             style={{ animationDelay: '80ms' }}
           >
-            Mexican Paletas.
+            {t.hero.title[0]}
             <br className="hidden sm:block" />{' '}
-            <span className="text-taupe">This Summer.</span>
+            <span className="text-taupe">{t.hero.title[1]}</span>
           </h1>
 
           <p
             className="max-w-2xl text-lg sm:text-xl leading-relaxed text-umber/85 text-pretty animate-subtle-rise"
             style={{ animationDelay: '160ms' }}
           >
-            Real fruit. Real cream. No stabilizers, no shortcuts.
+            {t.hero.subtitle}
           </p>
 
           <div
@@ -361,9 +770,13 @@ function Hero({ onSeeMenu, onFindUs }) {
             style={{ animationDelay: '240ms' }}
           >
             <span className="inline-flex items-center gap-3 rounded-full bg-ink text-paper pl-5 pr-5 py-2.5 shadow-[0_18px_40px_-18px_rgba(26,22,16,0.35)]">
-              <span className="text-sm font-semibold tracking-wide">$4 Single</span>
+              <span className="text-sm font-semibold tracking-wide">
+                {t.hero.single}
+              </span>
               <span className="h-4 w-px bg-paper/20" />
-              <span className="text-sm font-semibold tracking-wide">2 for $6</span>
+              <span className="text-sm font-semibold tracking-wide">
+                {t.hero.deal}
+              </span>
             </span>
           </div>
 
@@ -375,7 +788,7 @@ function Hero({ onSeeMenu, onFindUs }) {
               onClick={onSeeMenu}
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-medium text-paper shadow-sm transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-xl hover:bg-[#23200E]"
             >
-              See the Menu
+              {t.hero.seeMenu}
               <ArrowRight className="h-4 w-4 transition-transform duration-500 ease-fluid group-hover:translate-x-1" />
             </button>
             <button
@@ -383,7 +796,7 @@ function Hero({ onSeeMenu, onFindUs }) {
               className="group inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 bg-paper/60 backdrop-blur px-7 py-3.5 text-sm font-medium text-ink transition-[transform,border-color,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/30 hover:bg-paper/90"
             >
               <MapPin className="h-4 w-4" strokeWidth={1.8} />
-              Find Us
+              {t.hero.findUs}
             </button>
           </div>
         </div>
@@ -393,6 +806,8 @@ function Hero({ onSeeMenu, onFindUs }) {
 }
 
 function FlavorCard({ flavor, onOpen, index }) {
+  const { t } = useLang()
+
   return (
     <button
       onClick={() => onOpen(flavor)}
@@ -408,7 +823,7 @@ function FlavorCard({ flavor, onOpen, index }) {
           className={`inline-flex items-center gap-2 rounded-full bg-paper/70 border border-ink/[0.06] px-3 py-1 text-[11px] font-medium tracking-wide uppercase ${flavor.accent}`}
         >
           <span className={`h-1.5 w-1.5 rounded-full ${flavor.dot}`} />
-          Cream Base
+          {t.menu.chip}
         </span>
         <span
           className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-paper/70 border border-ink/[0.06] text-umber transition-[background-color,color,border-color,transform] duration-500 ease-fluid group-hover:bg-ink group-hover:text-paper group-hover:border-ink group-hover:rotate-[-8deg]"
@@ -422,22 +837,27 @@ function FlavorCard({ flavor, onOpen, index }) {
         <h3 className="font-display text-2xl sm:text-[1.75rem] leading-tight tracking-tight text-ink">
           {flavor.name}
         </h3>
-        <p className={`mt-1 text-sm font-medium ${flavor.accent}`}>{flavor.english}</p>
-        <p className="mt-4 text-sm leading-relaxed text-umber/85">{flavor.tagline}</p>
+        <p className={`mt-1 text-sm font-medium ${flavor.accent}`}>
+          {flavor.english}
+        </p>
+        <p className="mt-4 text-sm leading-relaxed text-umber/85">
+          {flavor.tagline}
+        </p>
       </div>
 
       <div className="relative mt-auto pt-10 flex items-end justify-between text-xs text-taupe">
         <span className="inline-flex items-center gap-1.5">
           <span className={`h-1 w-1 rounded-full ${flavor.dot}`} />
-          {flavor.calories} kcal · per bar
+          {flavor.calories} kcal · {t.menu.perBar}
         </span>
-        <span className="font-medium text-ink">View Details</span>
+        <span className="font-medium text-ink">{t.menu.viewDetails}</span>
       </div>
     </button>
   )
 }
 
-function MenuSection({ onOpenFlavor }) {
+function MenuSection({ flavors, onOpenFlavor }) {
+  const { t } = useLang()
   const headerRef = useReveal()
   const gridRef = useReveal({ threshold: 0.1 })
 
@@ -451,17 +871,15 @@ function MenuSection({ onOpenFlavor }) {
         >
           <div className="max-w-2xl">
             <span className="text-xs font-medium uppercase tracking-[0.22em] text-taupe">
-              The Menu
+              {t.menu.eyebrow}
             </span>
             <h2 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.03] tracking-tightest text-ink text-balance">
-              Four flavors.
+              {t.menu.title[0]}
               <br className="hidden sm:block" />{' '}
-              <span className="text-taupe">Made this morning.</span>
+              <span className="text-taupe">{t.menu.title[1]}</span>
             </h2>
           </div>
-          <p className="max-w-md text-umber/85 leading-relaxed">
-            Tap a flavor for the full ingredient list. Every bar is made and frozen the day we sell it.
-          </p>
+          <p className="max-w-md text-umber/85 leading-relaxed">{t.menu.blurb}</p>
         </div>
 
         <div
@@ -482,7 +900,43 @@ function MenuSection({ onOpenFlavor }) {
   )
 }
 
+function NoteSection() {
+  const { t } = useLang()
+  const ref = useReveal()
+  if (!t.note) return null
+
+  return (
+    <section className="relative py-20 lg:py-28 bg-paper">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[28rem] w-[58rem] rounded-full bg-rose-200/25 blur-[120px]" />
+      </div>
+
+      <div className="mx-auto max-w-4xl px-6 lg:px-10">
+        <div ref={ref} className="reveal relative">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-taupe">
+            {t.note.eyebrow}
+          </span>
+          <h2 className="mt-5 font-display text-3xl sm:text-4xl lg:text-[2.75rem] leading-[1.1] tracking-tightest text-ink text-balance">
+            {t.note.title}
+          </h2>
+          <p className="mt-7 text-lg sm:text-xl text-umber leading-relaxed text-pretty">
+            {t.note.body}
+          </p>
+          <div className="mt-8 flex items-center gap-3">
+            <div className="h-px w-12 bg-ink/25" />
+            <span className="font-display italic text-sm text-taupe">
+              {t.note.sign}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function FlavorModal({ flavor, onClose }) {
+  const { t } = useLang()
   useEscapeKey(onClose, !!flavor)
   useLockBodyScroll(!!flavor)
 
@@ -508,7 +962,7 @@ function FlavorModal({ flavor, onClose }) {
           <div className="absolute inset-0 paper-grain opacity-50" />
           <button
             onClick={onClose}
-            aria-label="Close details"
+            aria-label={t.modal.close}
             className="absolute top-4 right-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-paper/80 backdrop-blur border border-ink/10 text-ink shadow-sm transition-[background-color,color,transform] duration-500 ease-fluid hover:bg-ink hover:text-paper hover:rotate-90"
           >
             <X className="h-4 w-4" />
@@ -518,7 +972,7 @@ function FlavorModal({ flavor, onClose }) {
               className={`inline-flex items-center gap-2 rounded-full bg-paper/80 border border-ink/[0.06] px-3 py-1 text-[11px] font-medium tracking-wide uppercase ${flavor.accent}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${flavor.dot}`} />
-              Cream Base
+              {t.menu.chip}
             </span>
           </div>
         </div>
@@ -532,14 +986,16 @@ function FlavorModal({ flavor, onClose }) {
               >
                 {flavor.name}
               </h3>
-              <p className={`mt-1 text-sm font-medium ${flavor.accent}`}>{flavor.english}</p>
+              <p className={`mt-1 text-sm font-medium ${flavor.accent}`}>
+                {flavor.english}
+              </p>
             </div>
             <div className="text-right shrink-0">
               <div className="font-display text-3xl tracking-tightest text-ink">
                 {flavor.calories}
               </div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-taupe mt-0.5">
-                kcal / bar
+                {t.modal.kcalBar}
               </div>
             </div>
           </div>
@@ -548,7 +1004,7 @@ function FlavorModal({ flavor, onClose }) {
 
           <div className="mt-8">
             <h4 className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
-              Ingredients
+              {t.modal.ingredients}
             </h4>
             <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
               {flavor.ingredients.map((ingredient) => (
@@ -565,10 +1021,10 @@ function FlavorModal({ flavor, onClose }) {
 
           <div className="mt-8 rounded-2xl border border-ink/[0.07] bg-paper/60 px-5 py-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-taupe">
-              Allergens
+              {t.modal.allergens}
             </div>
             <p className="mt-1.5 text-sm text-umber leading-relaxed">
-              Contains dairy. May contain tree nuts. No artificial stabilizers, emulsifiers, or colors.
+              {t.modal.allergenNote}
             </p>
           </div>
         </div>
@@ -578,6 +1034,7 @@ function FlavorModal({ flavor, onClose }) {
 }
 
 function LocationSection() {
+  const { t } = useLang()
   const headerRef = useReveal()
   const cardsRef = useReveal({ threshold: 0.1 })
 
@@ -596,22 +1053,19 @@ function LocationSection() {
         >
           <div className="max-w-2xl">
             <span className="text-xs font-medium uppercase tracking-[0.22em] text-taupe">
-              Find Us
+              {t.location.eyebrow}
             </span>
             <h2 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.03] tracking-tightest text-ink text-balance">
-              On 9W.
-              <span className="text-taupe"> Every day.</span>
+              {t.location.title[0]}
+              <span className="text-taupe"> {t.location.title[1]}</span>
             </h2>
           </div>
           <p className="max-w-md text-umber/85 leading-relaxed">
-            Same spot all summer in Highland, NY. Pull over, grab a bar, keep going.
+            {t.location.blurb}
           </p>
         </div>
 
-        <div
-          ref={cardsRef}
-          className="stagger grid grid-cols-1 lg:grid-cols-5 gap-6"
-        >
+        <div ref={cardsRef} className="stagger grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div
             style={{ '--i': 0 }}
             className="lg:col-span-3 rounded-3xl border border-ink/[0.07] bg-cream p-7 sm:p-10 shadow-[0_1px_0_rgba(26,22,16,0.03)] relative overflow-hidden"
@@ -619,20 +1073,20 @@ function LocationSection() {
             <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl" />
             <div className="relative flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
-                The Stand
+                {t.location.stand}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide border border-emerald-300/50">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-70 animate-pulse-dot" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
                 </span>
-                Open Now
+                {t.location.openNow}
               </span>
             </div>
 
             <div className="relative mt-8">
               <div className="text-[11px] uppercase tracking-[0.22em] text-taupe">
-                Open for the Summer
+                {t.location.openSummer}
               </div>
               <div className="mt-3 flex items-start gap-4">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-paper border border-ink/[0.07] text-ink shrink-0">
@@ -655,7 +1109,7 @@ function LocationSection() {
                 className="group inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E]"
               >
                 <Navigation className="h-4 w-4" strokeWidth={1.8} />
-                Open in Maps
+                {t.location.openMaps}
                 <ArrowUpRight className="h-3.5 w-3.5 opacity-60 transition-transform duration-500 ease-fluid group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
               </a>
               <a
@@ -666,7 +1120,7 @@ function LocationSection() {
                 rel="noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 bg-paper px-6 py-3 text-sm font-medium text-ink transition-[transform,border-color,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:border-ink/30"
               >
-                Copy Address
+                {t.location.copyAddress}
               </a>
             </div>
           </div>
@@ -676,7 +1130,7 @@ function LocationSection() {
             className="lg:col-span-2 rounded-3xl border border-ink/[0.07] bg-cream p-7 sm:p-10 shadow-[0_1px_0_rgba(26,22,16,0.03)] flex flex-col"
           >
             <span className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
-              Hours
+              {t.location.hours}
             </span>
 
             <div className="mt-6 flex items-start gap-4">
@@ -685,11 +1139,11 @@ function LocationSection() {
               </span>
               <div>
                 <p className="font-display text-3xl sm:text-[2rem] leading-tight tracking-tight text-ink">
-                  11 AM – 7 PM
+                  {t.location.hoursValue}
                 </p>
                 <p className="mt-1 text-umber/85 inline-flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-taupe" strokeWidth={1.8} />
-                  Open every day
+                  {t.location.everyDay}
                 </p>
               </div>
             </div>
@@ -698,16 +1152,20 @@ function LocationSection() {
               <div className="rounded-2xl border border-ink/[0.07] bg-paper px-4 py-3">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-taupe inline-flex items-center gap-1.5">
                   <CreditCard className="h-3 w-3" strokeWidth={1.8} />
-                  Card
+                  {t.location.card}
                 </div>
-                <div className="mt-1.5 font-medium text-ink">Tap & Apple Pay</div>
+                <div className="mt-1.5 font-medium text-ink">
+                  {t.location.cardValue}
+                </div>
               </div>
               <div className="rounded-2xl border border-ink/[0.07] bg-paper px-4 py-3">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-taupe inline-flex items-center gap-1.5">
                   <Wallet className="h-3 w-3" strokeWidth={1.8} />
-                  Cash
+                  {t.location.cash}
                 </div>
-                <div className="mt-1.5 font-medium text-ink">Always welcome</div>
+                <div className="mt-1.5 font-medium text-ink">
+                  {t.location.cashValue}
+                </div>
               </div>
             </div>
           </div>
@@ -717,7 +1175,8 @@ function LocationSection() {
   )
 }
 
-function PhilosophySection() {
+function PhilosophySection({ pillars }) {
+  const { t } = useLang()
   const headerRef = useReveal()
   const gridRef = useReveal({ threshold: 0.1 })
 
@@ -727,13 +1186,13 @@ function PhilosophySection() {
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div ref={headerRef} className="reveal max-w-3xl">
           <span className="text-xs font-medium uppercase tracking-[0.22em] text-taupe">
-            Our Philosophy
+            {t.philosophy.eyebrow}
           </span>
           <h2 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.03] tracking-tightest text-ink text-balance">
-            How we make them.
+            {t.philosophy.title}
           </h2>
           <p className="mt-6 text-umber/85 leading-relaxed max-w-2xl">
-            From the cream we buy to the way we freeze the bars, we keep it simple. Real fruit. Real cream. Made by hand. Sold the same day.
+            {t.philosophy.blurb}
           </p>
         </div>
 
@@ -768,14 +1227,20 @@ function PhilosophySection() {
 }
 
 function Footer() {
+  const { t } = useLang()
+
   return (
     <footer className="relative bg-ink text-paper">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-paper/20 to-transparent" />
       <div className="mx-auto max-w-7xl px-6 lg:px-10 py-16 lg:py-20">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
           <div>
-            <div className="font-display text-4xl sm:text-5xl tracking-tightest">Elyra</div>
-            <p className="mt-3 text-paper/70 text-sm tracking-wide">Cold bars on 9W.</p>
+            <div className="font-display text-4xl sm:text-5xl tracking-tightest">
+              Elyra
+            </div>
+            <p className="mt-3 text-paper/70 text-sm tracking-wide">
+              {t.footer.tagline}
+            </p>
             <p className="mt-1 text-paper/50 text-sm">
               {LOCATION.street}, {LOCATION.city} · {LOCATION.hoursShort}
             </p>
@@ -802,11 +1267,28 @@ function Footer() {
         </div>
 
         <div className="mt-14 pt-8 border-t border-paper/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-paper/50">
-          <div>© {new Date().getFullYear()} Elyra Paletas. All rights reserved.</div>
+          <div>
+            © {new Date().getFullYear()} Elyra Paletas. {t.footer.rights}
+          </div>
           <div className="flex items-center gap-6">
-            <a href="#menu" className="transition-colors duration-300 hover:text-paper">Menu</a>
-            <a href="#location" className="transition-colors duration-300 hover:text-paper">Find Us</a>
-            <a href="#philosophy" className="transition-colors duration-300 hover:text-paper">Philosophy</a>
+            <a
+              href="#menu"
+              className="transition-colors duration-300 hover:text-paper"
+            >
+              {t.nav.menu}
+            </a>
+            <a
+              href="#location"
+              className="transition-colors duration-300 hover:text-paper"
+            >
+              {t.nav.findUs}
+            </a>
+            <a
+              href="#philosophy"
+              className="transition-colors duration-300 hover:text-paper"
+            >
+              {t.nav.philosophy}
+            </a>
           </div>
         </div>
       </div>
@@ -814,30 +1296,83 @@ function Footer() {
   )
 }
 
+// ---- App ----
+
 export default function App() {
-  const [activeFlavor, setActiveFlavor] = useState(null)
+  const [activeFlavorId, setActiveFlavorId] = useState(null)
+  const [lang, setLangState] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const saved = window.localStorage.getItem(STORAGE_KEY)
+    return saved === 'en' || saved === 'es' ? saved : null
+  })
+  const [showPicker, setShowPicker] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const saved = window.localStorage.getItem(STORAGE_KEY)
+    return !(saved === 'en' || saved === 'es')
+  })
+
+  useEffect(() => {
+    document.documentElement.lang = lang || 'en'
+  }, [lang])
+
+  const setLang = (next) => {
+    setLangState(next)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next)
+    } catch {
+      /* storage unavailable, swallow */
+    }
+  }
+
+  const handlePickerChoice = (chosen, remember) => {
+    setLangState(chosen)
+    setShowPicker(false)
+    if (remember) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, chosen)
+      } catch {
+        /* swallow */
+      }
+    }
+  }
+
+  const activeLang = lang || 'en'
+  const t = COPY[activeLang]
+  const flavors = FLAVORS.map((f) => ({ ...f, ...f.copy[activeLang] }))
+  const pillars = PILLARS[activeLang]
+  const activeFlavor =
+    activeFlavorId == null ? null : flavors.find((f) => f.id === activeFlavorId)
 
   const scrollToLocation = () => {
     const el = document.getElementById('location')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
-
   const scrollToMenu = () => {
     const el = document.getElementById('menu')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink antialiased">
-      <NavBar onFindUs={scrollToLocation} />
-      <main>
-        <Hero onSeeMenu={scrollToMenu} onFindUs={scrollToLocation} />
-        <MenuSection onOpenFlavor={setActiveFlavor} />
-        <LocationSection />
-        <PhilosophySection />
-      </main>
-      <Footer />
-      <FlavorModal flavor={activeFlavor} onClose={() => setActiveFlavor(null)} />
-    </div>
+    <LangContext.Provider value={{ lang: activeLang, t, setLang }}>
+      <div className="min-h-screen bg-paper text-ink antialiased">
+        <NavBar onFindUs={scrollToLocation} />
+        <main>
+          <Hero onSeeMenu={scrollToMenu} onFindUs={scrollToLocation} />
+          <MenuSection
+            flavors={flavors}
+            onOpenFlavor={(f) => setActiveFlavorId(f.id)}
+          />
+          <NoteSection />
+          <LocationSection />
+          <PhilosophySection pillars={pillars} />
+        </main>
+        <Footer />
+        <FlavorModal
+          flavor={activeFlavor}
+          onClose={() => setActiveFlavorId(null)}
+        />
+        {showPicker && <LanguagePicker onChoose={handlePickerChoice} />}
+      </div>
+    </LangContext.Provider>
   )
 }
