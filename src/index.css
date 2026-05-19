@@ -58,6 +58,17 @@
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
   }
+  /* Marker class on decorative ambient gradient blobs — only present so
+     low-power mode can strip them out without affecting other filters. */
+  .deco-blur {
+  }
+  /* Below-the-fold sections: let the browser skip rendering descendants
+     until they get close to the viewport. The intrinsic-size hint keeps
+     the scrollbar from jumping as sections paint in. */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 800px;
+  }
 }
 
 @layer components {
@@ -89,4 +100,48 @@
     transform: translate3d(0, 0, 0);
     will-change: auto;
   }
+}
+
+/* ---- Low-power / reduced-motion mode ----
+   Triggered by the inline detection script in index.html. Strips the
+   most expensive paint work: backdrop-filter (offscreen capture + blur
+   per frame), giant ambient gradient blurs, GPU compositor layers,
+   grain textures, and long transition durations. */
+
+.perf-low [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.perf-low .deco-blur {
+  display: none !important;
+}
+
+.perf-low .paper-grain {
+  background-image: none !important;
+}
+
+.perf-low .gpu {
+  transform: none !important;
+  backface-visibility: visible !important;
+  will-change: auto !important;
+}
+
+.perf-low .reveal,
+.perf-low .stagger > * {
+  transition-duration: 300ms !important;
+  transform: none !important;
+}
+
+.perf-low .reveal {
+  opacity: 1 !important;
+}
+
+.perf-low .stagger > * {
+  opacity: 1 !important;
+  transition-delay: 0ms !important;
+}
+
+.perf-low * {
+  animation-duration: 200ms !important;
 }

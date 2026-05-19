@@ -564,6 +564,7 @@ function useParallax(intensity = 0.12) {
     const el = ref.current
     if (!el) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (document.documentElement.classList.contains('perf-low')) return
     let ticking = false
     const onScroll = () => {
       if (ticking) return
@@ -818,7 +819,7 @@ function NavBar({ onFindUs, cartCount, onOpenCart }) {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">
         <a href="#top" className="group flex items-center gap-2">
-          <span className="font-display text-2xl font-600 tracking-tightest text-ink">
+          <span className="font-display text-2xl font-semibold tracking-tightest text-ink">
             Elyra
           </span>
           <span className="hidden sm:inline-flex h-1.5 w-1.5 rounded-full bg-rose-500 transition-colors duration-300 group-hover:bg-rose-600" />
@@ -908,17 +909,17 @@ function Hero({ onSeeMenu, onFindUs }) {
         <div className="absolute inset-0 bg-gradient-to-b from-paper via-[#F8F1DF] to-paper" />
         <div
           ref={blobA}
-          className="gpu absolute -top-40 right-[-12%] h-[34rem] w-[34rem] rounded-full bg-orange-300/45 blur-[110px]"
+          className="deco-blur gpu absolute -top-40 right-[-12%] h-[28rem] w-[28rem] sm:h-[34rem] sm:w-[34rem] rounded-full bg-orange-300/45 blur-[90px] sm:blur-[110px]"
         />
         <div
           ref={blobB}
-          className="gpu absolute top-40 left-[-12%] h-[26rem] w-[26rem] rounded-full bg-rose-300/40 blur-[110px]"
+          className="deco-blur gpu absolute top-40 left-[-12%] h-[26rem] w-[26rem] rounded-full bg-rose-300/40 blur-[110px] hidden sm:block"
         />
         <div
           ref={blobC}
-          className="gpu absolute bottom-0 left-1/2 -translate-x-1/2 h-[22rem] w-[58rem] rounded-full bg-amber-200/40 blur-[120px]"
+          className="deco-blur gpu absolute bottom-0 left-1/2 -translate-x-1/2 h-[22rem] w-[58rem] rounded-full bg-amber-200/40 blur-[120px] hidden md:block"
         />
-        <div className="absolute inset-0 paper-grain opacity-60" />
+        <div className="absolute inset-0 paper-grain opacity-60 hidden sm:block" />
       </div>
 
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -994,7 +995,7 @@ function FlavorCard({ flavor, onOpen, index }) {
     <button
       onClick={() => onOpen(flavor)}
       style={{ '--i': index }}
-      className={`group relative flex flex-col text-left rounded-3xl border border-ink/[0.07] ${flavor.cardBg} p-7 sm:p-8 transition-[transform,box-shadow,border-color] duration-500 ease-fluid hover:-translate-y-1.5 hover:shadow-[0_28px_60px_-20px_rgba(26,22,16,0.18)] ${flavor.cardHover} overflow-hidden h-full gpu`}
+      className={`group relative flex flex-col text-left rounded-3xl border border-ink/[0.07] ${flavor.cardBg} p-7 sm:p-8 transition-[transform,box-shadow,border-color] duration-500 ease-fluid hover:-translate-y-1.5 hover:shadow-[0_28px_60px_-20px_rgba(26,22,16,0.18)] ${flavor.cardHover} overflow-hidden h-full`}
     >
       <div
         className={`pointer-events-none absolute inset-x-0 -top-8 h-44 bg-gradient-to-b ${flavor.wash}`}
@@ -1044,7 +1045,7 @@ function MenuSection({ flavors, onOpenFlavor }) {
   const gridRef = useReveal({ threshold: 0.1 })
 
   return (
-    <section id="menu" className="relative py-24 lg:py-32 bg-paper">
+    <section id="menu" className="cv-auto relative py-24 lg:py-32 bg-paper">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/10 to-transparent" />
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div
@@ -1087,10 +1088,10 @@ function NoteSection() {
   const ref = useReveal()
 
   return (
-    <section className="relative py-20 lg:py-28 bg-paper">
+    <section className="cv-auto relative py-20 lg:py-28 bg-paper">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/10 to-transparent" />
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[28rem] w-[58rem] rounded-full bg-rose-200/25 blur-[120px]" />
+        <div className="deco-blur absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[28rem] w-[58rem] rounded-full bg-rose-200/25 blur-[120px] hidden sm:block" />
       </div>
 
       <div className="mx-auto max-w-4xl px-6 lg:px-10">
@@ -1264,11 +1265,11 @@ function LocationSection() {
   const cardsRef = useReveal({ threshold: 0.1 })
 
   return (
-    <section id="location" className="relative py-24 lg:py-32 bg-oat">
+    <section id="location" className="cv-auto relative py-24 lg:py-32 bg-oat">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/10 to-transparent" />
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-20 right-[-10%] h-[26rem] w-[26rem] rounded-full bg-emerald-300/25 blur-[110px]" />
-        <div className="absolute -bottom-20 left-[-10%] h-[22rem] w-[22rem] rounded-full bg-amber-200/40 blur-[100px]" />
+        <div className="deco-blur absolute top-20 right-[-10%] h-[26rem] w-[26rem] rounded-full bg-emerald-300/25 blur-[110px] hidden sm:block" />
+        <div className="deco-blur absolute -bottom-20 left-[-10%] h-[22rem] w-[22rem] rounded-full bg-amber-200/40 blur-[100px] hidden md:block" />
       </div>
 
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -1295,7 +1296,7 @@ function LocationSection() {
             style={{ '--i': 0 }}
             className="lg:col-span-3 rounded-3xl border border-ink/[0.07] bg-cream p-7 sm:p-10 shadow-[0_1px_0_rgba(26,22,16,0.03)] relative overflow-hidden"
           >
-            <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl" />
+            <div className="deco-blur pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl hidden sm:block" />
             <div className="relative flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
                 {t.location.stand}
@@ -1406,7 +1407,7 @@ function PhilosophySection({ pillars }) {
   const gridRef = useReveal({ threshold: 0.1 })
 
   return (
-    <section id="philosophy" className="relative py-24 lg:py-32 bg-paper">
+    <section id="philosophy" className="cv-auto relative py-24 lg:py-32 bg-paper">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/10 to-transparent" />
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div ref={headerRef} className="reveal max-w-3xl">
