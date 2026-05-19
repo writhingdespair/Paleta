@@ -19,6 +19,7 @@ export default {
           'sans-serif',
         ],
         display: [
+          'Fraunces Variable',
           'Fraunces',
           'ui-serif',
           'Georgia',

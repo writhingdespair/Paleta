@@ -1,3 +1,9 @@
+@import '@fontsource-variable/fraunces/wght.css';
+@import '@fontsource-variable/fraunces/wght-italic.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -78,12 +84,10 @@
     transition:
       opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
       transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
   }
   .reveal.in-view {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-    will-change: auto;
   }
 
   .stagger > * {
@@ -93,12 +97,10 @@
       opacity 780ms cubic-bezier(0.22, 1, 0.36, 1),
       transform 780ms cubic-bezier(0.22, 1, 0.36, 1);
     transition-delay: calc(var(--i, 0) * 90ms);
-    will-change: opacity, transform;
   }
   .stagger.in-view > * {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-    will-change: auto;
   }
 }
 

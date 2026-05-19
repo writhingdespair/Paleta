@@ -1,29 +1,37 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ArrowRight,
-  ArrowUpRight,
-  Calendar,
-  Check,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  Instagram,
-  Loader2,
-  MapPin,
-  Menu as MenuIcon,
-  Minus,
-  Music2,
-  Navigation,
-  Plus,
-  ShoppingBag,
-  Trash2,
-  Wallet,
-  X,
-} from 'lucide-react'
+  Suspense,
+  lazy,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js'
+import ArrowUpRight from 'lucide-react/dist/esm/icons/arrow-up-right.js'
+import Calendar from 'lucide-react/dist/esm/icons/calendar.js'
+import Check from 'lucide-react/dist/esm/icons/check.js'
+import Clock from 'lucide-react/dist/esm/icons/clock.js'
+import CreditCard from 'lucide-react/dist/esm/icons/credit-card.js'
+import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
+import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
+import MenuIcon from 'lucide-react/dist/esm/icons/menu.js'
+import Music2 from 'lucide-react/dist/esm/icons/music-2.js'
+import Navigation from 'lucide-react/dist/esm/icons/navigation.js'
+import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag.js'
+import Wallet from 'lucide-react/dist/esm/icons/wallet.js'
+import X from 'lucide-react/dist/esm/icons/x.js'
+
+import { LangContext, useLang } from './lang.js'
+import { useEscapeKey, useLockBodyScroll } from './lib/hooks.js'
+import { SINGLE_PRICE, fmt } from './lib/cart.js'
+import QuantityStepper from './components/QuantityStepper.jsx'
+
+const CartDrawer = lazy(() => import('./components/CartDrawer.jsx'))
+const CheckoutModal = lazy(() => import('./components/CheckoutModal.jsx'))
 
 const STORAGE_KEY = 'elyra-lang'
-const SINGLE_PRICE = 4
-const PAIR_PRICE = 6
 
 const COPY = {
   en: {
@@ -472,59 +480,7 @@ const LOCATION = {
     'https://www.google.com/maps/search/?api=1&query=3448+US-9W+Highland+NY+12528',
 }
 
-// ---- Helpers ----
-
-function priceCart(cart) {
-  const count = cart.reduce((sum, item) => sum + item.qty, 0)
-  const pairs = Math.floor(count / 2)
-  const singles = count % 2
-  const subtotal = count * SINGLE_PRICE
-  const total = pairs * PAIR_PRICE + singles * SINGLE_PRICE
-  const savings = subtotal - total
-  return { count, subtotal, total, savings, pairs, singles }
-}
-
-const fmt = (n) => `$${n.toFixed(2)}`
-
-function formatCardNumber(value) {
-  const digits = value.replace(/\D/g, '').slice(0, 16)
-  return digits.replace(/(.{4})/g, '$1 ').trim()
-}
-
-function formatExpiry(value) {
-  const digits = value.replace(/\D/g, '').slice(0, 4)
-  if (digits.length < 3) return digits
-  return `${digits.slice(0, 2)} / ${digits.slice(2)}`
-}
-
-function generateOrderNumber() {
-  const id = Math.random().toString(36).slice(2, 7).toUpperCase()
-  return `ELY-${id}`
-}
-
 // ---- Hooks ----
-
-function useEscapeKey(handler, enabled) {
-  useEffect(() => {
-    if (!enabled) return
-    const onKey = (e) => {
-      if (e.key === 'Escape') handler()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [handler, enabled])
-}
-
-function useLockBodyScroll(locked) {
-  useEffect(() => {
-    if (!locked) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [locked])
-}
 
 function useReveal({ threshold = 0.15, rootMargin = '0px 0px -64px 0px' } = {}) {
   const ref = useRef(null)
@@ -565,6 +521,7 @@ function useParallax(intensity = 0.12) {
     if (!el) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (document.documentElement.classList.contains('perf-low')) return
+
     let ticking = false
     const onScroll = () => {
       if (ticking) return
@@ -575,9 +532,40 @@ function useParallax(intensity = 0.12) {
         ticking = false
       })
     }
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+
+    let attached = false
+    const attach = () => {
+      if (attached) return
+      attached = true
+      window.addEventListener('scroll', onScroll, { passive: true })
+      onScroll()
+    }
+    const detach = () => {
+      if (!attached) return
+      attached = false
+      window.removeEventListener('scroll', onScroll)
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+      attach()
+      return detach
+    }
+
+    // Match the hero margin so the listener stays attached briefly after the
+    // hero leaves the viewport — avoids a transform-snap when the user
+    // scrolls back up.
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) attach()
+        else detach()
+      },
+      { rootMargin: '200px 0px 200px 0px' },
+    )
+    obs.observe(el)
+    return () => {
+      obs.disconnect()
+      detach()
+    }
   }, [intensity])
   return ref
 }
@@ -602,9 +590,6 @@ function useScrolled(threshold = 8) {
 }
 
 // ---- Language ----
-
-const LangContext = createContext({ lang: 'en', t: COPY.en, setLang: () => {} })
-const useLang = () => useContext(LangContext)
 
 function LanguagePicker({ onChoose }) {
   const [remember, setRemember] = useState(true)
@@ -756,43 +741,6 @@ function CartButton({ count, onClick }) {
         </span>
       )}
     </button>
-  )
-}
-
-function QuantityStepper({ value, onChange, min = 1, max = 99, size = 'md' }) {
-  const sizes =
-    size === 'sm'
-      ? { h: 'h-8', btn: 'h-8 w-8', text: 'text-sm', icon: 'h-3 w-3' }
-      : { h: 'h-11', btn: 'h-11 w-11', text: 'text-base', icon: 'h-3.5 w-3.5' }
-  return (
-    <div
-      className={`inline-flex ${sizes.h} items-center rounded-full border border-ink/15 bg-paper`}
-    >
-      <button
-        type="button"
-        onClick={() => onChange(Math.max(min, value - 1))}
-        disabled={value <= min}
-        aria-label="Decrease"
-        className={`${sizes.btn} inline-flex items-center justify-center rounded-full text-umber transition-[background-color,color] duration-300 hover:bg-ink/5 hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-umber`}
-      >
-        <Minus className={sizes.icon} strokeWidth={2} />
-      </button>
-      <span
-        className={`${sizes.text} font-medium tabular-nums text-ink w-7 text-center`}
-        aria-live="polite"
-      >
-        {value}
-      </span>
-      <button
-        type="button"
-        onClick={() => onChange(Math.min(max, value + 1))}
-        disabled={value >= max}
-        aria-label="Increase"
-        className={`${sizes.btn} inline-flex items-center justify-center rounded-full text-umber transition-[background-color,color] duration-300 hover:bg-ink/5 hover:text-ink disabled:opacity-40`}
-      >
-        <Plus className={sizes.icon} strokeWidth={2} />
-      </button>
-    </div>
   )
 }
 
@@ -988,7 +936,7 @@ function Hero({ onSeeMenu, onFindUs }) {
   )
 }
 
-function FlavorCard({ flavor, onOpen, index }) {
+const FlavorCard = memo(function FlavorCard({ flavor, onOpen, index }) {
   const { t } = useLang()
 
   return (
@@ -1037,7 +985,7 @@ function FlavorCard({ flavor, onOpen, index }) {
       </div>
     </button>
   )
-}
+})
 
 function MenuSection({ flavors, onOpenFlavor }) {
   const { t } = useLang()
@@ -1452,458 +1400,6 @@ function PhilosophySection({ pillars }) {
   )
 }
 
-// ---- Cart & Checkout ----
-
-function CartLineItem({ item, onUpdate, onRemove }) {
-  const { t } = useLang()
-  return (
-    <div className="flex items-start gap-4 py-4">
-      <div
-        className={`relative h-16 w-12 sm:h-20 sm:w-14 rounded-xl overflow-hidden border border-ink/10 ${item.flavor.cardBg} shrink-0`}
-      >
-        <div
-          className={`absolute inset-x-0 -top-1 h-12 bg-gradient-to-b ${item.flavor.wash}`}
-        />
-        <div
-          className={`absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full ${item.flavor.dot}`}
-        />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-display text-lg leading-tight tracking-tight text-ink truncate">
-          {item.flavor.name}
-        </div>
-        <div className={`mt-0.5 text-xs ${item.flavor.accent}`}>
-          {item.flavor.english}
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <QuantityStepper
-            value={item.qty}
-            onChange={(next) => onUpdate(item.id, next)}
-            size="sm"
-            min={0}
-          />
-          <div className="text-sm font-medium tabular-nums text-ink">
-            {fmt(item.qty * SINGLE_PRICE)}
-          </div>
-        </div>
-      </div>
-      <button
-        onClick={() => onRemove(item.id)}
-        aria-label={t.cart.remove}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-taupe transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink"
-      >
-        <Trash2 className="h-4 w-4" strokeWidth={1.6} />
-      </button>
-    </div>
-  )
-}
-
-function CartDrawer({ open, onClose, items, onUpdate, onRemove, onCheckout, onSeeMenu }) {
-  const { t } = useLang()
-  const pricing = priceCart(items)
-
-  useEscapeKey(onClose, open)
-  useLockBodyScroll(open)
-
-  return (
-    <>
-      <div
-        onClick={onClose}
-        className={`fixed inset-0 z-[55] bg-ink/30 backdrop-blur-[3px] transition-opacity duration-500 ease-fluid ${
-          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        aria-hidden
-      />
-      <aside
-        role="dialog"
-        aria-label={t.cart.title}
-        aria-modal="true"
-        className={`fixed inset-y-0 right-0 z-[56] w-full sm:max-w-[440px] bg-cream border-l border-ink/10 shadow-[-30px_0_60px_-20px_rgba(26,22,16,0.25)] transition-transform duration-500 ease-fluid flex flex-col ${
-          open ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-ink/[0.07]">
-          <div>
-            <div className="font-display text-2xl tracking-tightest text-ink leading-tight">
-              {t.cart.title}
-            </div>
-            {pricing.count > 0 && (
-              <div className="text-xs text-taupe mt-0.5">
-                {pricing.count}{' '}
-                {pricing.count === 1 ? t.cart.itemSingular : t.cart.itemPlural}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            aria-label={t.cart.close}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 text-ink transition-[background-color,color,transform] duration-500 ease-fluid hover:bg-ink hover:text-paper hover:rotate-90"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {pricing.count === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-            <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-paper border border-ink/[0.07] text-taupe">
-              <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-            </div>
-            <div className="mt-5 font-display text-xl tracking-tight text-ink">
-              {t.cart.empty}
-            </div>
-            <p className="mt-2 text-sm text-taupe max-w-[18rem]">
-              {t.cart.emptyHint}
-            </p>
-            <button
-              onClick={() => {
-                onClose()
-                onSeeMenu()
-              }}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-[transform,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:bg-[#23200E]"
-            >
-              {t.cart.seeMenu}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto px-6 divide-y divide-ink/[0.06]">
-              {items.map((item) => (
-                <CartLineItem
-                  key={item.id}
-                  item={item}
-                  onUpdate={onUpdate}
-                  onRemove={onRemove}
-                />
-              ))}
-              <div className="py-4 text-xs text-taupe inline-flex items-start gap-2">
-                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" strokeWidth={1.6} />
-                <span>{t.cart.pickupNote}</span>
-              </div>
-            </div>
-
-            <div className="border-t border-ink/[0.07] bg-paper/60 px-6 py-5">
-              <dl className="space-y-2 text-sm">
-                <div className="flex items-center justify-between text-umber">
-                  <dt>{t.cart.subtotal}</dt>
-                  <dd className="tabular-nums">{fmt(pricing.subtotal)}</dd>
-                </div>
-                {pricing.savings > 0 && (
-                  <div className="flex items-center justify-between text-emerald-700">
-                    <dt>{t.cart.deal}</dt>
-                    <dd className="tabular-nums">−{fmt(pricing.savings)}</dd>
-                  </div>
-                )}
-                <div className="flex items-center justify-between pt-2 mt-2 border-t border-ink/[0.07] text-ink">
-                  <dt className="font-display text-lg tracking-tight">
-                    {t.cart.total}
-                  </dt>
-                  <dd className="font-display text-2xl tracking-tightest tabular-nums">
-                    {fmt(pricing.total)}
-                  </dd>
-                </div>
-              </dl>
-
-              <button
-                onClick={onCheckout}
-                className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-paper transition-[transform,box-shadow,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E]"
-              >
-                {t.cart.checkout} · {fmt(pricing.total)}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </>
-        )}
-      </aside>
-    </>
-  )
-}
-
-function CheckoutModal({ open, onClose, items, onComplete }) {
-  const { t } = useLang()
-  const pricing = priceCart(items)
-  const [stage, setStage] = useState('form')
-  const [form, setForm] = useState({ name: '', number: '', expiry: '', cvc: '' })
-  const [orderNumber, setOrderNumber] = useState('')
-
-  useEscapeKey(() => {
-    if (stage !== 'processing') onClose()
-  }, open)
-  useLockBodyScroll(open)
-
-  useEffect(() => {
-    if (!open) {
-      setStage('form')
-      setForm({ name: '', number: '', expiry: '', cvc: '' })
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (stage !== 'processing') return
-    const id = setTimeout(() => {
-      setOrderNumber(generateOrderNumber())
-      setStage('success')
-    }, 1600)
-    return () => clearTimeout(id)
-  }, [stage])
-
-  if (!open) return null
-
-  const fillDemo = () => {
-    setForm({
-      name: 'Demo · Elyra',
-      number: formatCardNumber('4242424242424242'),
-      expiry: formatExpiry('1228'),
-      cvc: '123',
-    })
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setStage('processing')
-  }
-
-  const formValid =
-    form.name.trim().length > 1 &&
-    form.number.replace(/\s/g, '').length >= 12 &&
-    form.expiry.replace(/\D/g, '').length >= 3 &&
-    form.cvc.length >= 3
-
-  const handleDone = () => {
-    onComplete()
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-[58] flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fade-in"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t.checkout.title}
-      onClick={() => {
-        if (stage !== 'processing') onClose()
-      }}
-    >
-      <div className="absolute inset-0 bg-ink/40 backdrop-blur-md" />
-
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full sm:max-w-lg bg-cream sm:rounded-3xl rounded-t-3xl border border-ink/[0.06] shadow-[0_40px_80px_-20px_rgba(26,22,16,0.45)] overflow-hidden animate-scale-in flex flex-col max-h-[92vh]"
-      >
-        <div className="flex items-center justify-between px-6 sm:px-7 py-4 border-b border-ink/[0.07]">
-          <div className="inline-flex items-center gap-2.5">
-            <div className="font-display text-xl tracking-tight text-ink">
-              {t.checkout.title}
-            </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]">
-              {t.checkout.demoLabel}
-            </span>
-          </div>
-          {stage !== 'processing' && (
-            <button
-              onClick={onClose}
-              aria-label={t.modal.close}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink transition-[background-color,color,transform] duration-500 ease-fluid hover:bg-ink hover:text-paper hover:rotate-90"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {stage === 'form' && (
-          <div className="flex-1 overflow-y-auto px-6 sm:px-7 py-5 sm:py-6">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-900 leading-relaxed">
-              {t.checkout.demoNote}
-            </div>
-
-            <div className="mt-6">
-              <h4 className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
-                {t.checkout.summary}
-              </h4>
-              <ul className="mt-3 space-y-2 text-sm">
-                {items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 text-umber"
-                  >
-                    <span className="inline-flex items-center gap-2.5 min-w-0">
-                      <span
-                        className={`inline-block h-2 w-2 rounded-full ${item.flavor.dot}`}
-                      />
-                      <span className="truncate text-ink">
-                        {item.flavor.name}
-                      </span>
-                      <span className="text-taupe">× {item.qty}</span>
-                    </span>
-                    <span className="tabular-nums">
-                      {fmt(item.qty * SINGLE_PRICE)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <dl className="mt-4 pt-4 border-t border-ink/[0.07] space-y-1.5 text-sm">
-                <div className="flex items-center justify-between text-umber">
-                  <dt>{t.cart.subtotal}</dt>
-                  <dd className="tabular-nums">{fmt(pricing.subtotal)}</dd>
-                </div>
-                {pricing.savings > 0 && (
-                  <div className="flex items-center justify-between text-emerald-700">
-                    <dt>{t.cart.deal}</dt>
-                    <dd className="tabular-nums">−{fmt(pricing.savings)}</dd>
-                  </div>
-                )}
-                <div className="flex items-center justify-between pt-2 mt-1 border-t border-ink/[0.07] text-ink">
-                  <dt className="font-medium">{t.cart.total}</dt>
-                  <dd className="font-display text-xl tracking-tightest tabular-nums">
-                    {fmt(pricing.total)}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.22em] text-taupe">
-                  {t.checkout.payment}
-                </h4>
-                <button
-                  type="button"
-                  onClick={fillDemo}
-                  className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700 hover:text-rose-800 transition-colors duration-300"
-                >
-                  {t.checkout.useDemoCard}
-                </button>
-              </div>
-
-              <label className="block">
-                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
-                  {t.checkout.cardName}
-                </span>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((s) => ({ ...s, name: e.target.value }))
-                  }
-                  placeholder={t.checkout.cardNamePlaceholder}
-                  className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
-                  autoComplete="cc-name"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
-                  {t.checkout.cardNumber}
-                </span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={form.number}
-                  onChange={(e) =>
-                    setForm((s) => ({
-                      ...s,
-                      number: formatCardNumber(e.target.value),
-                    }))
-                  }
-                  placeholder="4242 4242 4242 4242"
-                  className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink tabular-nums tracking-wider placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
-                  autoComplete="cc-number"
-                />
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
-                    {t.checkout.cardExpiry}
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.expiry}
-                    onChange={(e) =>
-                      setForm((s) => ({
-                        ...s,
-                        expiry: formatExpiry(e.target.value),
-                      }))
-                    }
-                    placeholder="MM / YY"
-                    className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink tabular-nums placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
-                    autoComplete="cc-exp"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-taupe">
-                    {t.checkout.cardCvc}
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.cvc}
-                    onChange={(e) =>
-                      setForm((s) => ({
-                        ...s,
-                        cvc: e.target.value.replace(/\D/g, '').slice(0, 4),
-                      }))
-                    }
-                    placeholder="123"
-                    className="mt-1.5 w-full rounded-xl border border-ink/15 bg-paper px-4 py-2.5 text-sm text-ink tabular-nums placeholder:text-taupe/60 focus:outline-none focus:border-ink/40 transition-colors duration-300"
-                    autoComplete="cc-csc"
-                  />
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={!formValid}
-                className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-paper transition-[transform,box-shadow,background-color,opacity] duration-500 ease-fluid hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#23200E] disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-              >
-                {t.checkout.pay} · {fmt(pricing.total)}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {stage === 'processing' && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
-            <Loader2 className="h-7 w-7 text-ink animate-spin" strokeWidth={1.5} />
-            <div className="mt-5 font-display text-xl tracking-tight text-ink">
-              {t.checkout.processing}
-            </div>
-          </div>
-        )}
-
-        {stage === 'success' && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:py-16 text-center">
-            <div className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300/60">
-              <CheckCircle2 className="h-7 w-7" strokeWidth={1.5} />
-            </div>
-            <div className="mt-6 font-display text-3xl sm:text-4xl tracking-tightest text-ink leading-tight">
-              {t.checkout.successTitle}
-            </div>
-            <p className="mt-3 text-sm text-umber max-w-sm">
-              {t.checkout.successNote}
-            </p>
-            <div className="mt-6 rounded-2xl border border-ink/[0.07] bg-paper/70 px-5 py-3 text-sm">
-              <span className="text-taupe uppercase tracking-[0.18em] text-[11px]">
-                {t.checkout.orderNumberLabel}
-              </span>
-              <span className="ml-2 font-display tabular-nums text-ink">
-                #{orderNumber}
-              </span>
-            </div>
-            <button
-              onClick={handleDone}
-              className="mt-7 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-medium text-paper transition-[transform,background-color] duration-500 ease-fluid hover:-translate-y-0.5 hover:bg-[#23200E]"
-            >
-              {t.checkout.done}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 function Footer() {
   const { t } = useLang()
 
@@ -1980,7 +1476,14 @@ export default function App() {
   const [activeFlavorId, setActiveFlavorId] = useState(null)
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
+  // Stays true after the first cart open so the drawer keeps rendering and
+  // can play its slide-out transition when cartOpen flips back to false.
+  const [cartMounted, setCartMounted] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+
+  useEffect(() => {
+    if (cartOpen) setCartMounted(true)
+  }, [cartOpen])
   const [lang, setLangState] = useState(() => {
     if (typeof window === 'undefined') return null
     const saved = window.localStorage.getItem(STORAGE_KEY)
@@ -2079,12 +1582,21 @@ export default function App() {
   const handleCheckout = () => {
     setCartOpen(false)
     setCheckoutOpen(true)
+    // Warm the checkout chunk as the drawer closes.
+    import('./components/CheckoutModal.jsx')
   }
 
   const handleCheckoutComplete = () => {
     setCheckoutOpen(false)
     setCart([])
   }
+
+  const openFlavor = useCallback((f) => {
+    setActiveFlavorId(f.id)
+    // First flavor open is the strongest signal that the user might add to
+    // cart — prefetch the drawer chunk so it's cached before they tap Add.
+    import('./components/CartDrawer.jsx')
+  }, [])
 
   return (
     <LangContext.Provider value={{ lang: activeLang, t, setLang }}>
@@ -2096,10 +1608,7 @@ export default function App() {
         />
         <main>
           <Hero onSeeMenu={scrollToMenu} onFindUs={scrollToLocation} />
-          <MenuSection
-            flavors={flavors}
-            onOpenFlavor={(f) => setActiveFlavorId(f.id)}
-          />
+          <MenuSection flavors={flavors} onOpenFlavor={openFlavor} />
           {t.note && <NoteSection />}
           <LocationSection />
           <PhilosophySection pillars={pillars} />
@@ -2112,22 +1621,30 @@ export default function App() {
           onAdd={addToCart}
         />
 
-        <CartDrawer
-          open={cartOpen}
-          onClose={() => setCartOpen(false)}
-          items={cartItems}
-          onUpdate={updateQty}
-          onRemove={removeFromCart}
-          onCheckout={handleCheckout}
-          onSeeMenu={scrollToMenu}
-        />
+        {cartMounted && (
+          <Suspense fallback={null}>
+            <CartDrawer
+              open={cartOpen}
+              onClose={() => setCartOpen(false)}
+              items={cartItems}
+              onUpdate={updateQty}
+              onRemove={removeFromCart}
+              onCheckout={handleCheckout}
+              onSeeMenu={scrollToMenu}
+            />
+          </Suspense>
+        )}
 
-        <CheckoutModal
-          open={checkoutOpen}
-          onClose={() => setCheckoutOpen(false)}
-          items={cartItems}
-          onComplete={handleCheckoutComplete}
-        />
+        {checkoutOpen && (
+          <Suspense fallback={null}>
+            <CheckoutModal
+              open={checkoutOpen}
+              onClose={() => setCheckoutOpen(false)}
+              items={cartItems}
+              onComplete={handleCheckoutComplete}
+            />
+          </Suspense>
+        )}
 
         {showPicker && <LanguagePicker onChoose={handlePickerChoice} />}
       </div>
