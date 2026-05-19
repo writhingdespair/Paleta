@@ -26,6 +26,9 @@ export default {
       },
       colors: {
         ink: '#0B0B0F',
+        canvas: '#050507',
+        surface: '#0C0C10',
+        elevated: '#121218',
       },
       letterSpacing: {
         tightest: '-0.045em',
