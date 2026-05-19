@@ -535,6 +535,14 @@ function useReveal({ threshold = 0.15, rootMargin = '0px 0px -64px 0px' } = {}) 
       el.classList.add('in-view')
       return
     }
+    // If the element is already in or past the viewport on mount, reveal
+    // immediately so a late mount or restored scroll position doesn't
+    // leave the content stuck at opacity 0.
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight) {
+      el.classList.add('in-view')
+      return
+    }
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -1077,7 +1085,6 @@ function MenuSection({ flavors, onOpenFlavor }) {
 function NoteSection() {
   const { t } = useLang()
   const ref = useReveal()
-  if (!t.note) return null
 
   return (
     <section className="relative py-20 lg:py-28 bg-paper">
@@ -2092,7 +2099,7 @@ export default function App() {
             flavors={flavors}
             onOpenFlavor={(f) => setActiveFlavorId(f.id)}
           />
-          <NoteSection />
+          {t.note && <NoteSection />}
           <LocationSection />
           <PhilosophySection pillars={pillars} />
         </main>
