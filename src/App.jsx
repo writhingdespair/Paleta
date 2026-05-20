@@ -1499,6 +1499,32 @@ export default function App() {
     document.documentElement.lang = lang || 'en'
   }, [lang])
 
+  // Pre-warm cv-auto sections ~2 viewports before they enter view so a
+  // fast flick doesn't outrun the browser's paint trigger and show a
+  // blank placeholder. Once warmed, the class stays — sections are
+  // treated as fully rendered for the rest of the session.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      document.querySelectorAll('.cv-auto').forEach((el) =>
+        el.classList.add('cv-warm'),
+      )
+      return
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('cv-warm')
+            obs.unobserve(entry.target)
+          }
+        }
+      },
+      { rootMargin: '200% 0px' },
+    )
+    document.querySelectorAll('.cv-auto').forEach((el) => obs.observe(el))
+    return () => obs.disconnect()
+  }, [lang])
+
   const setLang = (next) => {
     setLangState(next)
     try {

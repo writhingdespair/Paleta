@@ -76,6 +76,9 @@
     contain-intrinsic-size: 0 800px;
     contain-intrinsic-size: auto 800px;
   }
+  .cv-auto.cv-warm {
+    content-visibility: visible;
+  }
 }
 
 @layer components {
