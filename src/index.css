@@ -74,6 +74,7 @@
   .cv-auto {
     content-visibility: auto;
     contain-intrinsic-size: 0 800px;
+    contain-intrinsic-size: auto 800px;
   }
 }
 
